@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AccountRouteImport } from './routes/account'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as PlansRouteImport } from './routes/plans'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -34,6 +35,11 @@ const AboutRoute = AboutRouteImport.update({
 const AccountRoute = AccountRouteImport.update({
   id: '/account',
   path: '/account',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
+  '/admin': typeof AdminRoute
   '/contact': typeof ContactRoute
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
+  '/admin': typeof AdminRoute
   '/contact': typeof ContactRoute
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
@@ -108,6 +116,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
+  '/admin': typeof AdminRoute
   '/contact': typeof ContactRoute
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
@@ -123,6 +132,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/account'
+    | '/admin'
     | '/contact'
     | '/plans'
     | '/privacy'
@@ -136,6 +146,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/account'
+    | '/admin'
     | '/contact'
     | '/plans'
     | '/privacy'
@@ -149,6 +160,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/account'
+    | '/admin'
     | '/contact'
     | '/plans'
     | '/privacy'
@@ -163,6 +175,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AccountRoute: typeof AccountRoute
+  AdminRoute: typeof AdminRoute
   ContactRoute: typeof ContactRoute
   PlansRoute: typeof PlansRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -194,6 +207,13 @@ declare module '@tanstack/react-router' {
       path: '/account'
       fullPath: '/account'
       preLoaderRoute: typeof AccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -259,6 +279,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AccountRoute: AccountRoute,
+  AdminRoute: AdminRoute,
   ContactRoute: ContactRoute,
   PlansRoute: PlansRoute,
   PrivacyRoute: PrivacyRoute,
