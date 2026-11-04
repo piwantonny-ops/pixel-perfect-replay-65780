@@ -28,14 +28,14 @@ export function MovieCard({ m, wide }: { m: Movie; wide?: boolean }) {
   );
 }
 
-export function MovieRow({ title, movies, seeAll }: { title: string; movies: Movie[]; seeAll?: { to: string } }) {
+export function MovieRow({ title, movies, seeAll }: { title: string; movies: Movie[]; seeAll?: string }) {
   if (!movies.length) return null;
   return (
     <section className="py-3">
       <div className="mb-2 flex items-center justify-between px-4">
         <h2 className="font-display text-2xl tracking-wide">{title}</h2>
         {seeAll && (
-          <a href={seeAll.to} className="flex items-center text-sm text-primary-glow">See all <ChevronRight className="h-4 w-4" /></a>
+          <Link to="/browse/$row" params={{ row: seeAll }} className="flex items-center text-sm text-primary-glow">See all <ChevronRight className="h-4 w-4" /></Link>
         )}
       </div>
       <div className="no-scrollbar flex gap-3 overflow-x-auto px-4 pb-1">
