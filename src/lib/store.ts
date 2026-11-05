@@ -96,7 +96,7 @@ function seedMovies(): Movie[] {
     id: slug(title), title, vj: "VJ Emma", category, genres, year: 2026 - (i % 4), duration: `${1 + (i % 2)}h ${10 + i * 3}m`,
     description: `${title} — translated by VJ Emma. A gripping story full of twists, courage and emotion that will keep you watching until the very end.`,
     poster, banner, videoUrl: SAMPLE_VIDEO, trailerUrl: SAMPLE_VIDEO, downloadUrl: "", badge, isFree, completed: i % 3 !== 1,
-    featured: i < 3, rows: rowSets[i], createdAt: Date.now() - i * 86400000,
+    featured: i < 3, rows: rowSets[i] ?? ["latest"], createdAt: Date.now() - i * 86400000,
   }));
 }
 

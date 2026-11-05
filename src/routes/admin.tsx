@@ -139,7 +139,7 @@ function MovieForm({ movie, onClose }: { movie: Movie; onClose: () => void }) {
   const set = <K extends keyof Movie>(k: K, v: Movie[K]) => setM((x) => ({ ...x, [k]: v }));
   const toggle = (k: "genres" | "rows", v: string) => set(k, m[k].includes(v) ? m[k].filter((x) => x !== v) : [...m[k], v]);
   const save = () => {
-    if (!m.title.trim() || !m.poster.trim()) return toast.error("Title and Poster URL are required");
+    if (!m.title.trim() || !m.poster.trim()) { toast.error("Title and Poster URL are required"); return; }
     if (movie.id) {
       update((d) => ({ ...d, movies: d.movies.map((x) => (x.id === movie.id ? m : x)) }));
     } else {
@@ -352,7 +352,7 @@ function SettingsTab() {
     <div className="space-y-3 rounded-xl bg-card p-4"><h3 className="font-display text-2xl tracking-wide">{title}</h3>{children}</div>
   );
   const testR2 = async () => {
-    if (!s.r2PublicUrl) return toast.error("Add the R2 Public Link first");
+    if (!s.r2PublicUrl) { toast.error("Add the R2 Public Link first"); return; }
     try { await fetch(s.r2PublicUrl, { method: "HEAD", mode: "no-cors" }); toast.success("R2 public link is reachable"); }
     catch { toast.error("Could not reach the R2 public link"); }
   };
@@ -385,7 +385,7 @@ function SettingsTab() {
                 <button aria-label="Edit plan" onClick={() => {
                   const name = prompt("Plan name", p.name); if (!name) return;
                   const price = Number(prompt("Price (UGX)", String(p.price))); const days = Number(prompt("Days", String(p.days)));
-                  if (!price || !days) return toast.error("Invalid price or days");
+                  if (!price || !days) { toast.error("Invalid price or days"); return; }
                   update((d) => ({ ...d, plans: d.plans.map((x) => (x.id === p.id ? { ...x, name, price, days } : x)) }));
                 }}><Pencil className="h-4 w-4" /></button>
                 <button aria-label="Delete plan" onClick={() => confirm(`Delete ${p.name}?`) && update((d) => ({ ...d, plans: d.plans.filter((x) => x.id !== p.id) }))}><Trash2 className="h-4 w-4 text-destructive" /></button>
@@ -400,7 +400,7 @@ function SettingsTab() {
         </div>
         <Button variant="secondary" onClick={() => {
           const price = Number(plan.price), days = Number(plan.days);
-          if (!plan.name.trim() || !price || !days) return toast.error("Fill name, price and days");
+          if (!plan.name.trim() || !price || !days) { toast.error("Fill name, price and days"); return; }
           update((d) => ({ ...d, plans: [...d.plans, { id: newId(), name: plan.name.trim(), price, days }] }));
           setPlan({ name: "", price: "", days: "" });
         }}><Plus /> Add plan</Button>
@@ -426,7 +426,7 @@ function SettingsTab() {
         {F("Live TV channels count", "liveTvChannels", "number")}
         {F("Admin Username", "adminUser")}
         {F("Admin Password / PIN", "adminPassword", "password")}
-        <Button variant="hero" onClick={() => { if (s.adminPassword.length < 4) return toast.error("Password must be at least 4 characters"); save("Site settings"); }}>Save site settings</Button>
+        <Button variant="hero" onClick={() => { if (s.adminPassword.length < 4) { toast.error("Password must be at least 4 characters"); return; } save("Site settings"); }}>Save site settings</Button>
       </Card>
       <div className="md:col-span-2"><Taxonomy /></div>
     </div>
