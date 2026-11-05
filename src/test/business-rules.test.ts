@@ -21,7 +21,8 @@ describe("VJEMMA business rules", () => {
     expect(canWatch(vip, { ...user, expiresAt: now - 1 })).toBe(false);
     expect(canWatch(vip, { ...user, blocked: true })).toBe(false);
     expect(canWatch({ ...vip, isFree: true }, null)).toBe(true);
-    expect(isActive({ ...user, expiresAt: undefined })).toBe(false);
+    const { expiresAt: _unused, ...noPlan } = user;
+    expect(isActive(noPlan)).toBe(false);
   });
   it("buying again adds days on top of an active plan", () => {
     const now = 1_000_000_000_000;
