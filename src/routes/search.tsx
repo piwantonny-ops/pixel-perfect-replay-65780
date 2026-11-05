@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useDB, categoryName } from "@/lib/store";
 
 export const Route = createFileRoute("/search")({
-  validateSearch: (s: Record<string, unknown>) => ({ q: typeof s.q === "string" ? s.q : "" }),
+  validateSearch: (s: Record<string, unknown>) => ({ q: typeof s["q"] === "string" ? s["q"] : "" }),
   head: () => ({
     meta: [
       { title: "Search Movies — VJEMMA MOVIES" },

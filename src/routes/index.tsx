@@ -28,7 +28,7 @@ function Hero() {
     return () => clearInterval(t);
   }, [slides.length]);
   if (!slides.length) return null;
-  const m = slides[i % slides.length];
+  const m = slides[i % slides.length]!;
   const go = (d: number) => setI((x) => (x + d + slides.length) % slides.length);
   return (
     <section className="relative h-[62vh] min-h-[380px] w-full overflow-hidden sm:h-[70vh]">

@@ -82,7 +82,7 @@ function MoviePage() {
   const addComment = (e: React.FormEvent) => {
     e.preventDefault();
     const name = (cName || user?.name || "").trim();
-    if (!name || !cText.trim()) return toast.error("Enter your name and comment");
+    if (!name || !cText.trim()) { toast.error("Enter your name and comment"); return; }
     update((d) => ({ ...d, comments: [...d.comments, { id: newId(), movieId: m.id, name, text: cText.trim(), createdAt: Date.now() }] }));
     setCText("");
   };

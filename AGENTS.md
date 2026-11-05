@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- All app data (movies, users, payments, settings) goes through `src/lib/store.ts` (`useDB`/`update`); it is localStorage-backed until the user's own Supabase is connected, so swap the storage there rather than in pages.

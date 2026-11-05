@@ -15,19 +15,19 @@ export function AuthDialog({ open, onOpenChange, onDone }: { open: boolean; onOp
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const p = normalizePhone(phone);
-    if (p.length < 10) return toast.error("Enter a valid phone number");
-    if (pw.length < 4) return toast.error("Password must be at least 4 characters");
+    if (p.length < 10) { toast.error("Enter a valid phone number"); return; }
+    if (pw.length < 4) { toast.error("Password must be at least 4 characters"); return; }
     const existing = db.users.find((u) => u.phone === p);
     if (mode === "up") {
-      if (!name.trim()) return toast.error("Enter your name");
-      if (existing) return toast.error("This phone number already has an account. Sign in instead.");
+      if (!name.trim()) { toast.error("Enter your name"); return; }
+      if (existing) { toast.error("This phone number already has an account. Sign in instead."); return; }
       const id = newId();
       update((d) => ({ ...d, users: [...d.users, { id, name: name.trim(), phone: p, password: pw, blocked: false, watchlist: [], createdAt: Date.now() }] }));
       setSessionUser(id);
       toast.success(`Welcome, ${name.trim()}!`);
     } else {
-      if (!existing || existing.password !== pw) return toast.error("Wrong phone number or password");
-      if (existing.blocked) return toast.error("This account is blocked. Contact us on WhatsApp.");
+      if (!existing || existing.password !== pw) { toast.error("Wrong phone number or password"); return; }
+      if (existing.blocked) { toast.error("This account is blocked. Contact us on WhatsApp."); return; }
       setSessionUser(existing.id);
       toast.success(`Welcome back, ${existing.name}!`);
     }
