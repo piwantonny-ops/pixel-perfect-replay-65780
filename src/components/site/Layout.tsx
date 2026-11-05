@@ -36,7 +36,7 @@ function Header() {
         <Link to="/" className="mr-auto font-display text-3xl tracking-wider">
           <span className="bg-gradient-brand bg-clip-text text-transparent">{db.settings.logoText}</span>
         </Link>
-        <Link to="/search" aria-label="Search" className="rounded-full p-2 hover:bg-muted"><Search className="h-5 w-5" /></Link>
+        <Link to="/search" search={{ q: "" }} aria-label="Search" className="rounded-full p-2 hover:bg-muted"><Search className="h-5 w-5" /></Link>
         <Link to="/admin" className="flex items-center gap-1 rounded-full border border-border px-3 py-1 text-xs font-semibold hover:bg-muted"><Shield className="h-3.5 w-3.5" />Admin</Link>
         <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
           <SheetTrigger aria-label="Menu" className="rounded-full p-2 hover:bg-muted"><Menu className="h-5 w-5" /></SheetTrigger>
@@ -54,9 +54,10 @@ function Header() {
               )}
             </div>
             <div className="mt-4 flex flex-col gap-1 text-sm">
-              {[["/", "Home"], ["/plans", "Subscription Plans"], ["/account", "My Account & Watchlist"], ["/search", "Search"], ["/about", "About Us"], ["/contact", "Contact"], ["/terms", "Terms"], ["/privacy", "Privacy"]].map(([to, l]) => (
+              {([["/", "Home"], ["/plans", "Subscription Plans"], ["/account", "My Account & Watchlist"], ["/about", "About Us"], ["/contact", "Contact"], ["/terms", "Terms"], ["/privacy", "Privacy"]] as const).map(([to, l]) => (
                 <Link key={to} to={to} onClick={close} className="rounded px-2 py-2 hover:bg-muted">{l}</Link>
               ))}
+              <Link to="/search" search={{ q: "" }} onClick={close} className="rounded px-2 py-2 hover:bg-muted">Search</Link>
               {user && <button className="rounded px-2 py-2 text-left text-destructive hover:bg-muted" onClick={() => { setSessionUser(null); close(); toast.success("Signed out"); nav({ to: "/" }); }}>Sign out</button>}
             </div>
           </SheetContent>
