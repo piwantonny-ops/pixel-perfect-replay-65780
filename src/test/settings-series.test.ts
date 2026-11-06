@@ -17,7 +17,8 @@ describe("Settings persistence", () => {
   });
   it("upgrades old links without deleting existing movies", () => {
     const db = seedDB();
-    const legacy = { ...db, contactLinksVersion: undefined, settings: { ...db.settings, whatsapp: "256700000000" }, movies: [{ ...db.movies[0], id: "existing" } as Movie] };
+    const { contactLinksVersion: _version, ...oldDB } = db;
+    const legacy = { ...oldDB, settings: { ...db.settings, whatsapp: "256700000000" }, movies: [{ ...db.movies[0], id: "existing" } as Movie] };
     const restored = restoreDB(legacy);
     expect(restored.settings.whatsapp).toBe("0776043203");
     expect(restored.movies.map((m) => m.id)).toEqual(["existing"]);
@@ -47,7 +48,9 @@ describe("Series episodes", () => {
     expect(seriesSummary(series)).toBe("Series - Season 1 - 12 Episodes");
   });
   it("orders episodes for next episode playback across seasons", () => {
-    const reversed: Movie = { ...series, seasons: [{ id: "s2", number: 2, episodes: [{ ...seriesEpisodes(series)[0], id: "s2e1", number: 1 }] }, { id: "s1", number: 1, episodes: [...(series.seasons?.[0]?.episodes ?? [])].reverse() }] };
+    const firstEpisode = seriesEpisodes(series)[0];
+    if (!firstEpisode) throw new Error("Episode fixture required");
+    const reversed: Movie = { ...series, seasons: [{ id: "s2", number: 2, episodes: [{ ...firstEpisode, id: "s2e1", number: 1 }] }, { id: "s1", number: 1, episodes: [...(series.seasons?.[0]?.episodes ?? [])].reverse() }] };
     const list = seriesEpisodes(reversed);
     expect(list.map((e) => e.id)).toEqual([...Array.from({ length: 12 }, (_, i) => `e${i + 1}`), "s2e1"]);
     expect(list[1]?.videoUrl).toBe("https://example.com/2.mp4");
