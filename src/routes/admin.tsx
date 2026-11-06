@@ -10,9 +10,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SeasonEditor } from "@/components/site/SeasonEditor";
 import {
   useDB, useSession, update, setAdmin, isActive, markPaymentPaid, ugx, fmtDate, newId, slugify, ROWS, categoryName,
-  type Movie, type Settings, type Badge,
+  saveSettings, type Movie, type Settings, type Badge,
 } from "@/lib/store";
 
 export const Route = createFileRoute("/admin")({
@@ -29,6 +30,10 @@ export const Route = createFileRoute("/admin")({
 });
 
 const sel = "h-9 w-full rounded-md border border-input bg-background px-3 text-sm";
+
+function SettingsSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return <section className="min-w-0 space-y-3 border-t border-border pt-4"><h3 className="font-display text-2xl">{title}</h3>{children}</section>;
+}
 
 function AdminLogin() {
   const { settings } = useDB();
@@ -128,6 +133,7 @@ function Overview() {
 }
 
 const emptyMovie = (): Movie => ({
+  type: "movie", seasons: [],
   id: "", title: "", vj: "VJ Emma", category: "movies", genres: [], year: new Date().getFullYear(), duration: "", description: "",
   poster: "", banner: "", videoUrl: "", trailerUrl: "", downloadUrl: "", badge: "None", isFree: false, completed: true, featured: false,
   rows: ["latest"], createdAt: Date.now(),
@@ -140,6 +146,12 @@ function MovieForm({ movie, onClose }: { movie: Movie; onClose: () => void }) {
   const toggle = (k: "genres" | "rows", v: string) => set(k, m[k].includes(v) ? m[k].filter((x) => x !== v) : [...m[k], v]);
   const save = () => {
     if (!m.title.trim() || !m.poster.trim()) { toast.error("Title and Poster URL are required"); return; }
+    if (m.type === "series") {
+      const seasons = m.seasons ?? [];
+      if (!seasons.length || seasons.some((s) => s.number < 1 || !Number.isInteger(s.number) || !s.episodes.length || new Set(s.episodes.map((e) => e.number)).size !== s.episodes.length || s.episodes.some((e) => !Number.isInteger(e.number) || e.number < 1 || !e.title.trim() || !e.videoUrl.trim())) || new Set(seasons.map((s) => s.number)).size !== seasons.length) {
+        toast.error("Add unique seasons and episodes with a title and video link for each episode"); return;
+      }
+    }
     if (movie.id) {
       update((d) => ({ ...d, movies: d.movies.map((x) => (x.id === movie.id ? m : x)) }));
     } else {
@@ -147,7 +159,7 @@ function MovieForm({ movie, onClose }: { movie: Movie; onClose: () => void }) {
       if (db.movies.some((x) => x.id === id)) id = `${id}-${newId().slice(0, 4)}`;
       update((d) => ({ ...d, movies: [{ ...m, id, createdAt: Date.now() }, ...d.movies] }));
     }
-    toast.success("Movie saved");
+    toast.success("Content saved");
     onClose();
   };
   const F = ({ label, k, ph }: { label: string; k: keyof Movie; ph?: string }) => (
@@ -155,6 +167,7 @@ function MovieForm({ movie, onClose }: { movie: Movie; onClose: () => void }) {
   );
   return (
     <div className="grid gap-3 sm:grid-cols-2">
+      <div className="space-y-1 sm:col-span-2"><Label htmlFor="content-type">Type</Label><select id="content-type" className={sel} value={m.type ?? "movie"} onChange={(e) => set("type", e.target.value as "movie" | "series")}><option value="movie">Movie</option><option value="series">Series</option></select></div>
       {F({ label: "Title *", k: "title" })}
       {F({ label: "VJ Name", k: "vj" })}
       <div className="space-y-1"><Label>Category</Label>
@@ -171,7 +184,8 @@ function MovieForm({ movie, onClose }: { movie: Movie; onClose: () => void }) {
       {F({ label: "Duration", k: "duration", ph: "1h 45m" })}
       {F({ label: "Poster Image URL *", k: "poster", ph: "https://…/poster.jpg" })}
       {F({ label: "Banner Image URL (carousel)", k: "banner", ph: "https://…/banner.jpg" })}
-      {F({ label: "Video URL (R2)", k: "videoUrl", ph: "https://…r2.dev/movie.mp4" })}
+      {m.type !== "series" && F({ label: "Video Link", k: "videoUrl", ph: "https://…/movie.mp4" })}
+      {m.type === "series" && <SeasonEditor seasons={m.seasons ?? []} onChange={(seasons) => set("seasons", seasons)} />}
       {F({ label: "Trailer URL", k: "trailerUrl" })}
       {F({ label: "Download URL (optional)", k: "downloadUrl" })}
       <div className="space-y-1 sm:col-span-2"><Label>Description</Label><Textarea value={m.description} onChange={(e) => set("description", e.target.value)} /></div>
@@ -188,7 +202,7 @@ function MovieForm({ movie, onClose }: { movie: Movie; onClose: () => void }) {
       <label className="flex items-center gap-2 text-sm"><Switch checked={m.isFree} onCheckedChange={(v) => set("isFree", v)} /> Free (off = VIP)</label>
       <label className="flex items-center gap-2 text-sm"><Switch checked={m.completed} onCheckedChange={(v) => set("completed", v)} /> Completed (off = Ongoing)</label>
       <label className="flex items-center gap-2 text-sm"><Switch checked={m.featured} onCheckedChange={(v) => set("featured", v)} /> Featured in carousel</label>
-      <div className="flex gap-2 sm:col-span-2"><Button variant="hero" onClick={save}>Save movie</Button><Button variant="ghost" onClick={onClose}>Cancel</Button></div>
+      <div className="flex gap-2 sm:col-span-2"><Button variant="hero" onClick={save}>Save content</Button><Button variant="ghost" onClick={onClose}>Cancel</Button></div>
     </div>
   );
 }
@@ -253,7 +267,7 @@ function Media() {
     <div className="space-y-4 pt-3">
       <div className="flex gap-2">
         <Input placeholder="Search movies…" value={q} onChange={(e) => setQ(e.target.value)} />
-        <Button variant="hero" onClick={() => setEditing(emptyMovie())}><Plus /> Add Movie</Button>
+        <Button variant="hero" className="shrink-0" onClick={() => setEditing(emptyMovie())}><Plus /> Add Content</Button>
       </div>
       <div className="space-y-2">
         {list.map((m) => (
@@ -271,7 +285,7 @@ function Media() {
       <Taxonomy />
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-          <DialogHeader><DialogTitle className="font-display text-3xl tracking-wide">{editing?.id ? "Edit Movie" : "Add Movie"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="font-display text-3xl tracking-wide">{editing?.id ? "Edit Content" : "Add Content"}</DialogTitle></DialogHeader>
           {editing && <MovieForm movie={editing} onClose={() => setEditing(null)} />}
         </DialogContent>
       </Dialog>
@@ -344,12 +358,12 @@ function SettingsTab() {
   const [s, setS] = useState<Settings>(db.settings);
   const [plan, setPlan] = useState({ name: "", price: "", days: "" });
   const set = (k: keyof Settings, v: string | number) => setS((x) => ({ ...x, [k]: v }));
-  const save = (label: string) => { update((d) => ({ ...d, settings: s })); toast.success(`${label} saved`); };
+  const save = (label: string) => {
+    try { saveSettings(s, db.plans); toast.success(`${label} saved`); }
+    catch { toast.error("Settings could not be saved. Check available browser storage and try again."); }
+  };
   const F = (label: string, k: keyof Settings, type = "text", ph = "") => (
-    <div className="space-y-1"><Label>{label}</Label><Input type={type} placeholder={ph} value={String(s[k])} onChange={(e) => set(k, type === "number" ? Number(e.target.value) : e.target.value)} /></div>
-  );
-  const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div className="space-y-3 rounded-xl bg-card p-4"><h3 className="font-display text-2xl tracking-wide">{title}</h3>{children}</div>
+    <div className="space-y-1"><Label htmlFor={`setting-${k}`}>{label}</Label><Input id={`setting-${k}`} type={type} placeholder={ph} value={String(s[k] ?? "")} onChange={(e) => set(k, type === "number" ? Number(e.target.value) : e.target.value)} /></div>
   );
   const testR2 = async () => {
     if (!s.r2PublicUrl) { toast.error("Add the R2 Public Link first"); return; }
@@ -358,7 +372,8 @@ function SettingsTab() {
   };
   return (
     <div className="grid gap-4 pt-3 md:grid-cols-2">
-      <Card title="Upload backend (Cloudflare R2)">
+      <div className="md:col-span-2"><Button variant="hero" onClick={() => save("All settings")}>Save All Settings</Button></div>
+      <SettingsSection title="Upload backend (Cloudflare R2)">
         {F("Upload backend link", "r2Endpoint", "text", "https://<account>.r2.cloudflarestorage.com")}
         {F("Upload token", "r2Token", "password")}
         {F("R2 Access Key", "r2AccessKey", "password")}
@@ -366,17 +381,17 @@ function SettingsTab() {
         {F("R2 Public Link", "r2PublicUrl", "text", "https://pub-xxxx.r2.dev")}
         <div className="flex gap-2"><Button variant="hero" onClick={() => save("Upload backend")}>Save upload backend</Button><Button variant="secondary" onClick={testR2}>Test connection</Button></div>
         <p className="text-xs text-muted-foreground">For now, paste video and poster links directly when adding a movie.</p>
-      </Card>
-      <Card title="Payments">
+      </SettingsSection>
+      <SettingsSection title="Payments">
         <div className="space-y-1 rounded-lg bg-muted p-3 text-sm">
-          <p>Provider: <b>Pesapal</b></p><p>Checkout: <b>In-app modal</b></p><p>Status: <b>IPN + live polling</b></p>
+          <p>Provider: <b>Pesapal</b></p>
           <p>Mode: <b className={s.pesapalKey && s.pesapalSecret ? "text-success" : "text-accent"}>{s.pesapalKey && s.pesapalSecret ? "Pesapal keys added" : "Manual (WhatsApp) — no keys yet"}</b></p>
         </div>
         {F("Pesapal Consumer Key", "pesapalKey", "password")}
         {F("Pesapal Consumer Secret", "pesapalSecret", "password")}
         <Button variant="hero" onClick={() => save("Payment settings")}>Save payment keys</Button>
-      </Card>
-      <Card title="Subscription plans">
+      </SettingsSection>
+      <SettingsSection title="Subscription plans">
         <ul className="space-y-1 text-sm">
           {db.plans.map((p) => (
             <li key={p.id} className="flex items-center justify-between rounded bg-muted px-3 py-1.5">
@@ -404,22 +419,23 @@ function SettingsTab() {
           update((d) => ({ ...d, plans: [...d.plans, { id: newId(), name: plan.name.trim(), price, days }] }));
           setPlan({ name: "", price: "", days: "" });
         }}><Plus /> Add plan</Button>
-      </Card>
-      <Card title="Mobile app">
+      </SettingsSection>
+      <SettingsSection title="Mobile app">
         {F("Version", "appVersion")}
         {F("App download link", "appLink", "text", "https://…")}
         {F("App file (.apk / .ipa) URL", "appFileUrl", "text", "https://…/vjemma.apk")}
         <div className="space-y-1"><Label>Release notes</Label><Textarea value={s.appNotes} onChange={(e) => set("appNotes", e.target.value)} /></div>
         <Button variant="hero" onClick={() => save("App release")}>Save app release</Button>
-      </Card>
-      <Card title="Social settings">
-        {F("WhatsApp Number", "whatsapp", "text", "256700000000")}
+      </SettingsSection>
+      <SettingsSection title="Social settings">
+        {F("WhatsApp 1", "whatsapp", "tel")}
+        {F("WhatsApp 2", "whatsapp2", "tel")}
         {F("TikTok Link", "tiktok")}
         {F("YouTube Link", "youtube")}
         {F("Facebook Link", "facebook")}
         <Button variant="hero" onClick={() => save("Social links")}>Save social links</Button>
-      </Card>
-      <Card title="Site settings">
+      </SettingsSection>
+      <SettingsSection title="Site settings">
         {F("Site Name", "siteName")}
         {F("Logo Text", "logoText")}
         {F("Tagline", "tagline")}
@@ -427,7 +443,7 @@ function SettingsTab() {
         {F("Admin Username", "adminUser")}
         {F("Admin Password / PIN", "adminPassword", "password")}
         <Button variant="hero" onClick={() => { if (s.adminPassword.length < 4) { toast.error("Password must be at least 4 characters"); return; } save("Site settings"); }}>Save site settings</Button>
-      </Card>
+      </SettingsSection>
       <div className="md:col-span-2"><Taxonomy /></div>
     </div>
   );
