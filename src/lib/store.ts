@@ -5,7 +5,11 @@ import poster1 from "@/assets/poster-1.jpg";
 import poster2 from "@/assets/poster-2.jpg";
 
 export type Badge = "TOP" | "VIP" | "Exclusive" | "None";
+export interface Episode { id: string; number: number; title: string; videoUrl: string; duration: string; thumbnail: string }
+export interface Season { id: string; number: number; episodes: Episode[] }
 export interface Movie {
+  type?: "movie" | "series";
+  seasons?: Season[];
   id: string;
   title: string;
   vj: string;
@@ -42,13 +46,14 @@ export interface Rating { movieId: string; key: string; stars: number }
 export interface Settings {
   siteName: string; logoText: string; tagline: string;
   adminUser: string; adminPassword: string;
-  whatsapp: string; tiktok: string; youtube: string; facebook: string;
+  whatsapp: string; whatsapp2: string; tiktok: string; youtube: string; facebook: string;
   pesapalKey: string; pesapalSecret: string;
   r2Endpoint: string; r2Token: string; r2AccessKey: string; r2Secret: string; r2PublicUrl: string;
   appVersion: string; appLink: string; appNotes: string; appFileUrl: string;
   liveTvChannels: number;
 }
 export interface DB {
+  contactLinksVersion?: number;
   movies: Movie[]; categories: Category[]; genres: Genre[]; plans: Plan[]; users: User[];
   payments: Payment[]; comments: Comment[]; ratings: Rating[]; settings: Settings;
 }
@@ -102,6 +107,7 @@ function seedMovies(): Movie[] {
 
 export function seedDB(): DB {
   return {
+    contactLinksVersion: 1,
     movies: seedMovies(),
     categories: CATS.map((name) => ({ id: slug(name), name, slug: slug(name) })),
     genres: GENRES.map((name) => ({ id: slug(name), name })),
@@ -115,7 +121,7 @@ export function seedDB(): DB {
     settings: {
       siteName: "VJEMMA MOVIES", logoText: "VJ EMMA", tagline: "VJ EMMA - Translated Movies",
       adminUser: "admin", adminPassword: "1234",
-      whatsapp: "256700000000", tiktok: "https://www.tiktok.com/", youtube: "https://www.youtube.com/", facebook: "https://www.facebook.com/",
+      whatsapp: "0776043203", whatsapp2: "0779818746", tiktok: "https://www.tiktok.com/@vjemmaoffical", youtube: "https://youtube.com/@vjemmaofficial", facebook: "",
       pesapalKey: "", pesapalSecret: "", r2Endpoint: "", r2Token: "", r2AccessKey: "", r2Secret: "", r2PublicUrl: "",
       appVersion: "1.0.4", appLink: "", appNotes: "", appFileUrl: "", liveTvChannels: 0,
     },
@@ -127,13 +133,37 @@ const SERVER = seedDB();
 let state: DB | null = null;
 const listeners = new Set<() => void>();
 
+export function restoreDB(parsed: Partial<DB>): DB {
+  const settings = { ...SERVER.settings, ...parsed.settings };
+  if (parsed.contactLinksVersion !== 1) {
+    settings.whatsapp = SERVER.settings.whatsapp;
+    settings.whatsapp2 = SERVER.settings.whatsapp2;
+    settings.tiktok = SERVER.settings.tiktok;
+    settings.youtube = SERVER.settings.youtube;
+    if (settings.facebook === "https://www.facebook.com/") settings.facebook = "";
+  }
+  return { ...SERVER, ...parsed, settings, contactLinksVersion: 1 };
+}
+
+export function seriesEpisodes(m: Movie) {
+  return [...(m.seasons ?? [])].sort((a, b) => a.number - b.number).flatMap((season) =>
+    [...season.episodes].sort((a, b) => a.number - b.number).map((episode) => ({ ...episode, seasonNumber: season.number })));
+}
+
+export function seriesSummary(m: Movie) {
+  if (m.type !== "series") return "";
+  const season = [...(m.seasons ?? [])].sort((a, b) => a.number - b.number)[0];
+  const count = season?.episodes.length ?? 0;
+  return `Series - Season ${season?.number ?? 1} - ${count} Episode${count === 1 ? "" : "s"}`;
+}
+
 function load(): DB {
   if (state) return state;
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as DB;
-      state = { ...SERVER, ...parsed, settings: { ...SERVER.settings, ...parsed.settings } };
+      state = restoreDB(parsed);
       return state;
     }
   } catch { /* ignore */ }
@@ -142,9 +172,14 @@ function load(): DB {
 }
 
 export function update(fn: (db: DB) => DB) {
-  state = fn(load());
-  localStorage.setItem(KEY, JSON.stringify(state));
+  const next = fn(load());
+  localStorage.setItem(KEY, JSON.stringify(next));
+  state = next;
   listeners.forEach((l) => l());
+}
+
+export function saveSettings(settings: Settings, plans: Plan[]) {
+  update((db) => ({ ...db, settings: { ...settings }, plans: plans.map((p) => ({ ...p })) }));
 }
 
 function subscribe(l: () => void) {
