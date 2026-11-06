@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { Bell, Facebook, Menu, MessageCircle, Music2, Search, Shield, User, Youtube } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -116,12 +116,13 @@ function Footer() {
 }
 
 export function SiteLayout({ children }: { children: ReactNode }) {
+  const location = useLocation();
   return (
     <div className="min-h-screen">
       <Header />
       <main className="mx-auto max-w-7xl">{children}</main>
       <Footer />
-      <FloatingBar />
+      {location.pathname === "/" && <FloatingBar />}
     </div>
   );
 }
