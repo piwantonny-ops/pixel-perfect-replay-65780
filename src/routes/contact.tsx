@@ -6,6 +6,8 @@ import { useDB } from "@/lib/store";
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Contact — VJEMMA MOVIES" },
       { name: "description", content: "Contact VJEMMA MOVIES on WhatsApp." },
       { property: "og:title", content: "Contact — VJEMMA MOVIES" },

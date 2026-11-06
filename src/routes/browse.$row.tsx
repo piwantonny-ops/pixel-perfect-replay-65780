@@ -8,6 +8,8 @@ export const Route = createFileRoute("/browse/$row")({
     const label = ROWS.find((r) => r.key === params.row)?.label ?? "Movies";
     return {
       meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
         { title: `${label} — VJEMMA MOVIES` },
         { name: "description", content: `${label} VJ Emma translated movies.` },
         { property: "og:title", content: `${label} — VJEMMA MOVIES` },

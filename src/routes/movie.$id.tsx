@@ -15,6 +15,7 @@ export const Route = createFileRoute("/movie/$id")({
     const name = params.id.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
     return {
       meta: [
+      { name: "twitter:card", content: "summary_large_image" },
         { title: `${name} — VJ Emma | VJEMMA MOVIES` },
         { name: "description", content: `Watch ${name} translated by VJ Emma on VJEMMA MOVIES.` },
         { property: "og:title", content: `${name} — VJEMMA MOVIES` },

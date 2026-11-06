@@ -5,6 +5,8 @@ import { TextPage } from "@/components/site/Layout";
 export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Terms of Use — VJEMMA MOVIES" },
       { name: "description", content: "Terms of use for VJEMMA MOVIES." },
       { property: "og:title", content: "Terms of Use — VJEMMA MOVIES" },

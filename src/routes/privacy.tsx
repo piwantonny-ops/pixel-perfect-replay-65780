@@ -5,6 +5,8 @@ import { TextPage } from "@/components/site/Layout";
 export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Privacy Policy — VJEMMA MOVIES" },
       { name: "description", content: "How VJEMMA MOVIES handles your data." },
       { property: "og:title", content: "Privacy Policy — VJEMMA MOVIES" },

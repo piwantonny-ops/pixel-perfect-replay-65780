@@ -19,6 +19,8 @@ import {
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Admin — VJEMMA MOVIES" },
       { name: "description", content: "VJEMMA MOVIES admin dashboard." },
       { name: "robots", content: "noindex" },

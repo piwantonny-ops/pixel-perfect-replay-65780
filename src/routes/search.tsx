@@ -9,6 +9,8 @@ export const Route = createFileRoute("/search")({
   validateSearch: (s: Record<string, unknown>) => ({ q: typeof s["q"] === "string" ? s["q"] : "" }),
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Search Movies — VJEMMA MOVIES" },
       { name: "description", content: "Search VJ Emma movies by title, VJ name or genre." },
       { property: "og:title", content: "Search Movies — VJEMMA MOVIES" },
