@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { TextPage } from "@/components/site/Layout";
+import { TextPage, waLink } from "@/components/site/Layout";
+import { Button } from "@/components/ui/button";
 import { useDB } from "@/lib/store";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Contact — VJEMMA MOVIES" },
       { name: "description", content: "Contact VJEMMA MOVIES on WhatsApp." },
       { property: "og:title", content: "Contact — VJEMMA MOVIES" },
@@ -18,7 +21,7 @@ function ContactPage() {
   const { settings } = useDB();
   return (
     <TextPage title="Contact">
-      <p>Reach us any time on WhatsApp for payments, requests and support.</p><a className="inline-block rounded-full bg-success px-5 py-2 font-semibold text-success-foreground" href={`https://wa.me/${settings.whatsapp}`} target="_blank" rel="noreferrer">Chat on WhatsApp +{settings.whatsapp}</a>
+      <p>Reach us on WhatsApp for payments, requests and support.</p><div className="flex flex-wrap gap-3">{[settings.whatsapp, settings.whatsapp2].filter(Boolean).map((phone, i) => <Button key={phone} asChild variant="success"><a href={waLink(phone)} target="_blank" rel="noreferrer">WhatsApp {i + 1}: {phone}</a></Button>)}</div>
     </TextPage>
   );
 }

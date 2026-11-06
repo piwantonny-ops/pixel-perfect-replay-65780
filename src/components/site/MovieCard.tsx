@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
-import type { Movie } from "@/lib/store";
+import { seriesSummary, type Movie } from "@/lib/store";
 
 export function MovieBadges({ m }: { m: Movie }) {
   return (
@@ -24,6 +24,7 @@ export function MovieCard({ m, wide }: { m: Movie; wide?: boolean }) {
         {!m.completed && <span className="absolute bottom-1.5 right-1.5 rounded bg-background/80 px-1.5 py-0.5 text-[10px] font-semibold">ONGOING</span>}
       </div>
       <p className="mt-1.5 line-clamp-2 text-xs font-medium sm:text-sm">{m.title}</p>
+      {m.type === "series" && <span className="mt-1 block rounded bg-secondary px-1.5 py-1 text-[10px] leading-relaxed text-secondary-foreground">{seriesSummary(m)}</span>}
     </Link>
   );
 }

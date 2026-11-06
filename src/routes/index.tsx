@@ -9,6 +9,8 @@ import { useDB, ROWS } from "@/lib/store";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "VJEMMA MOVIES — VJ Emma Translated Movies" },
       { name: "description", content: "Stream the latest VJ Emma translated movies, series, drama and Nigerian films. Daily, weekly and monthly plans." },
       { property: "og:title", content: "VJEMMA MOVIES — VJ Emma Translated Movies" },
@@ -28,7 +30,8 @@ function Hero() {
     return () => clearInterval(t);
   }, [slides.length]);
   if (!slides.length) return null;
-  const m = slides[i % slides.length]!;
+   const m = slides[i % slides.length];
+   if (!m) return null;
   const go = (d: number) => setI((x) => (x + d + slides.length) % slides.length);
   return (
     <section className="relative h-[62vh] min-h-[380px] w-full overflow-hidden sm:h-[70vh]">

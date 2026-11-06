@@ -10,6 +10,8 @@ export const Route = createFileRoute("/category/$slug")({
     const name = params.slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
     return {
       meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
         { title: `${name} — VJEMMA MOVIES` },
         { name: "description", content: `Watch ${name} translated by VJ Emma.` },
         { property: "og:title", content: `${name} — VJEMMA MOVIES` },

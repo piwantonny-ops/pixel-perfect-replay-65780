@@ -1,20 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Bookmark, BookmarkCheck, Download, Lock, Play, Share2, Star, Trash2 } from "lucide-react";
+import { Bookmark, BookmarkCheck, Download, Lock, Play, Share2, Star, Trash2, SkipForward } from "lucide-react";
 import { SiteLayout } from "@/components/site/Layout";
 import { MovieBadges, MovieRow } from "@/components/site/MovieCard";
 import { AuthDialog } from "@/components/site/AuthDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useDB, useSession, update, canWatch, categoryName, avgRating, newId, fmtDate } from "@/lib/store";
+import { useDB, useSession, update, canWatch, categoryName, avgRating, newId, fmtDate, seriesEpisodes, seriesSummary, type Episode } from "@/lib/store";
 
 export const Route = createFileRoute("/movie/$id")({
   head: ({ params }) => {
     const name = params.id.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
     return {
       meta: [
+      { name: "twitter:card", content: "summary_large_image" },
         { title: `${name} — VJ Emma | VJEMMA MOVIES` },
         { name: "description", content: `Watch ${name} translated by VJ Emma on VJEMMA MOVIES.` },
         { property: "og:title", content: `${name} — VJEMMA MOVIES` },
@@ -31,6 +32,7 @@ function MoviePage() {
   const db = useDB();
   const { user, isAdmin } = useSession();
   const [playing, setPlaying] = useState<"" | "full" | "trailer">("");
+  const [episodeId, setEpisodeId] = useState("");
   const [authOpen, setAuthOpen] = useState(false);
   const [cName, setCName] = useState("");
   const [cText, setCText] = useState("");
@@ -48,6 +50,10 @@ function MoviePage() {
   }
 
   const allowed = canWatch(m, user);
+  const episodes = seriesEpisodes(m);
+  const episode = episodes.find((e) => e.id === episodeId) ?? episodes[0];
+  const nextEpisode = episodes[episodes.findIndex((e) => e.id === episode?.id) + 1];
+  const videoUrl = m.type === "series" ? episode?.videoUrl : m.videoUrl;
   const avg = avgRating(db, m.id);
   const count = db.ratings.filter((r) => r.movieId === m.id).length;
   const rateKey = user?.id ?? "guest";
@@ -57,13 +63,23 @@ function MoviePage() {
   const inList = !!user?.watchlist.includes(m.id);
 
   const play = () => {
-    if (allowed) return setPlaying("full");
+    if (allowed) {
+      if (!videoUrl) { toast.error("No video link available yet"); return; }
+      return setPlaying("full");
+    }
     if (!user) { toast.info("Sign in to watch VIP movies"); return setAuthOpen(true); }
     toast.info("This is a VIP movie — choose a plan to watch");
   };
+  const playEpisode = (selected: Episode) => {
+    if (!allowed) return play();
+    if (!selected.videoUrl) { toast.error("No video link available yet"); return; }
+    setEpisodeId(selected.id);
+    setPlaying("full");
+  };
   const download = () => {
     if (!allowed) return play();
-    window.open(m.downloadUrl || m.videoUrl, "_blank");
+    const url = m.type === "series" ? videoUrl : m.downloadUrl || m.videoUrl;
+    if (url) window.open(url, "_blank");
   };
   const share = async () => {
     const url = window.location.href;
@@ -92,7 +108,7 @@ function MoviePage() {
       <div className="relative">
         <div className="relative aspect-video max-h-[70vh] w-full overflow-hidden bg-card">
           {playing ? (
-            <video key={playing} src={playing === "full" ? m.videoUrl : m.trailerUrl} controls autoPlay playsInline className="h-full w-full bg-background" />
+            <video key={`${playing}-${episode?.id ?? m.id}`} src={playing === "full" ? videoUrl : m.trailerUrl} poster={episode?.thumbnail || m.poster} controls autoPlay playsInline className="h-full w-full bg-background" />
           ) : (
             <>
               <img src={m.banner || m.poster} alt={m.title} className="h-full w-full object-cover" />
@@ -119,6 +135,8 @@ function MoviePage() {
             <span className={m.isFree ? "text-success" : "text-accent"}>{m.isFree ? "FREE" : "VIP"}</span>
           </div>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">{m.description}</p>
+          {m.type === "series" && <p className="mt-2 text-sm text-primary-glow">{seriesSummary(m)}</p>}
+          {m.type === "series" && episode && <div className="mt-3 flex flex-wrap items-center gap-3"><p className="text-sm font-semibold">Season {episode.seasonNumber} · Episode {episode.number}: {episode.title}</p><Button variant="secondary" size="sm" disabled={!nextEpisode} onClick={() => nextEpisode && playEpisode(nextEpisode)}><SkipForward /> Next Episode</Button></div>}
 
           <div className="mt-4 flex flex-wrap gap-2">
             <Button variant="hero" onClick={play}>{allowed ? <Play className="fill-current" /> : <Lock />} {allowed ? "Play" : "Watch (VIP)"}</Button>
@@ -143,6 +161,17 @@ function MoviePage() {
           </div>
         </div>
       </div>
+
+      {m.type === "series" && <section className="space-y-5 px-4 py-4">
+        <h2 className="font-display text-3xl">Episodes</h2>
+        {[...(m.seasons ?? [])].sort((a, b) => a.number - b.number).map((season) => <div key={season.id} className="space-y-2">
+          <h3 className="font-display text-2xl">Season {season.number}</h3>
+          <div className="grid gap-2 sm:grid-cols-2">{[...season.episodes].sort((a, b) => a.number - b.number).map((e) => <Button key={e.id} variant="secondary" aria-label={`Play Season ${season.number} Episode ${e.number}: ${e.title}`} aria-pressed={episode?.id === e.id && playing === "full"} onClick={() => playEpisode(e)} className={`h-auto min-h-20 w-full justify-start gap-3 whitespace-normal p-2 text-left ${episode?.id === e.id && playing === "full" ? "ring-2 ring-primary" : ""}`}>
+            <img src={e.thumbnail || m.poster} alt="" className="aspect-video w-20 shrink-0 rounded object-cover" /><span className="min-w-0 flex-1"><span className="block text-xs text-muted-foreground">Episode {e.number}{e.duration && ` · ${e.duration}`}</span><span className="block break-words">{e.title}</span></span><Play className="shrink-0" />
+          </Button>)}</div>
+        </div>)}
+        {!episodes.length && <p className="text-sm text-muted-foreground">No episodes available yet.</p>}
+      </section>}
 
       <section className="px-4 py-4">
         <h2 className="font-display text-2xl tracking-wide">Comments ({comments.length})</h2>

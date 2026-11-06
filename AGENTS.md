@@ -10,3 +10,6 @@
 <!-- LOVABLE:END -->
 
 - All app data (movies, users, payments, settings) goes through `src/lib/store.ts` (`useDB`/`update`); it is localStorage-backed until the user's own Supabase is connected, so swap the storage there rather than in pages.
+- Series reuse the existing content model and detail route with nested seasons and episodes, preserving existing movie IDs and playback access rules.
+- Define form wrapper components at module scope so state updates do not remount inputs or discard focus.
+- Upgrade legacy contact settings once using a version marker; later admin edits must survive refresh without being overwritten by defaults.

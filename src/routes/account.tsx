@@ -9,6 +9,8 @@ import { useDB, useSession, isActive, fmtDate, ugx } from "@/lib/store";
 export const Route = createFileRoute("/account")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "My Account — VJEMMA MOVIES" },
       { name: "description", content: "Your VJEMMA MOVIES subscription, payments and watchlist." },
       { property: "og:title", content: "My Account — VJEMMA MOVIES" },

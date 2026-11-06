@@ -1,13 +1,13 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { Bell, Facebook, Menu, MessageCircle, Music2, Search, Shield, User, Youtube } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { useDB, useSession, setSessionUser, isActive, fmtDate } from "@/lib/store";
+import { useDB, useSession, setSessionUser, isActive, fmtDate, normalizePhone } from "@/lib/store";
 import { AuthDialog } from "./AuthDialog";
 import { toast } from "sonner";
 
 export function waLink(num: string, text?: string) {
-  return `https://wa.me/${num.replace(/\D/g, "")}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
+  return `https://wa.me/${normalizePhone(num)}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
 }
 
 export function CategoryBar() {
@@ -78,7 +78,7 @@ function FloatingBar() {
   ];
   return (
     <div className="fixed right-2 top-1/2 z-30 flex -translate-y-1/2 flex-col gap-2 rounded-full bg-card/80 p-1.5 shadow-glow backdrop-blur">
-      {items.map(({ href, icon: I, label }) => (
+      {items.filter((item) => item.href).map(({ href, icon: I, label }) => (
         <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label} className="rounded-full p-2 hover:bg-primary"><I className="h-4 w-4" /></a>
       ))}
       <button aria-label="Notifications" onClick={() => toast("New VJ Emma translations drop every week — stay tuned!")} className="rounded-full p-2 hover:bg-primary"><Bell className="h-4 w-4" /></button>
@@ -89,7 +89,8 @@ function FloatingBar() {
 function Footer() {
   const { settings } = useDB();
   const socials = [
-    { href: waLink(settings.whatsapp), icon: MessageCircle, label: "WhatsApp" },
+    { href: waLink(settings.whatsapp), icon: MessageCircle, label: "WhatsApp 1" },
+    { href: settings.whatsapp2 ? waLink(settings.whatsapp2) : "", icon: MessageCircle, label: "WhatsApp 2" },
     { href: settings.tiktok, icon: Music2, label: "TikTok" },
     { href: settings.youtube, icon: Youtube, label: "YouTube" },
     { href: settings.facebook, icon: Facebook, label: "Facebook" },
@@ -100,7 +101,7 @@ function Footer() {
         <p className="font-display text-3xl tracking-wider"><span className="bg-gradient-brand bg-clip-text text-transparent">{settings.siteName}</span></p>
         <p className="text-muted-foreground">{settings.tagline}</p>
         <div className="mt-4 flex flex-wrap gap-2">
-          {socials.map(({ href, icon: I, label }) => (
+          {socials.filter((item) => item.href).map(({ href, icon: I, label }) => (
             <a key={label} href={href} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-full bg-secondary px-4 py-2 font-medium hover:bg-primary"><I className="h-4 w-4" />{label}</a>
           ))}
         </div>
@@ -115,12 +116,13 @@ function Footer() {
 }
 
 export function SiteLayout({ children }: { children: ReactNode }) {
+  const location = useLocation();
   return (
     <div className="min-h-screen">
       <Header />
       <main className="mx-auto max-w-7xl">{children}</main>
       <Footer />
-      <FloatingBar />
+      {location.pathname === "/" && <FloatingBar />}
     </div>
   );
 }
