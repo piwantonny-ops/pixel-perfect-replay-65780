@@ -8,7 +8,8 @@ import { AuthDialog } from "@/components/site/AuthDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useDB, useSession, update, canWatch, categoryName, avgRating, newId, fmtDate, seriesEpisodes, seriesSummary, type Episode } from "@/lib/store";
+import { useDB, useSession, update, canWatch, categoryName, avgRating, newId, fmtDate, seriesEpisodes, seriesSummary, type Episode, updateLocal, getUserToken } from "@/lib/store";
+import { userSaveWatchlist } from "@/lib/vj.functions";
 
 export const Route = createFileRoute("/movie/$id")({
   head: ({ params }) => {
@@ -88,7 +89,9 @@ function MoviePage() {
   };
   const toggleList = () => {
     if (!user) return setAuthOpen(true);
-    update((d) => ({ ...d, users: d.users.map((u) => u.id === user.id ? { ...u, watchlist: inList ? u.watchlist.filter((x) => x !== m.id) : [...u.watchlist, m.id] } : u) }));
+    const watchlist = inList ? user.watchlist.filter((x) => x !== m.id) : [...user.watchlist, m.id];
+    updateLocal((d) => ({ ...d, users: d.users.map((u) => u.id === user.id ? { ...u, watchlist } : u) }));
+    void userSaveWatchlist({ data: { token: getUserToken(), watchlist } }).catch(() => toast.error("Could not save watchlist"));
     toast.success(inList ? "Removed from watchlist" : "Added to watchlist");
   };
   const rate = (stars: number) => {

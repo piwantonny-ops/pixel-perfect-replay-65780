@@ -3,21 +3,22 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Smartphone } from "lucide-react";
-import { useDB, useSession, update, newId, ugx, type Plan } from "@/lib/store";
+import { useDB, useSession, updateLocal, getUserToken, ugx, type Plan } from "@/lib/store";
+import { userRequestPayment } from "@/lib/vj.functions";
 import { waLink } from "./Layout";
 
 export function PayDialog({ plan, onOpenChange }: { plan: Plan | null; onOpenChange: (o: boolean) => void }) {
   const { settings } = useDB();
   const { user } = useSession();
   const [sent, setSent] = useState(false);
-  const pesapalReady = !!(settings.pesapalKey && settings.pesapalSecret);
+  const pesapalReady = !!(settings.pesapalReady || (settings.pesapalKey && settings.pesapalSecret));
+  const momo = settings.momoNumber || settings.whatsapp;
   if (!plan || !user) return null;
 
   const createPending = (method: "pesapal" | "manual") => {
-    update((d) => ({
-      ...d,
-      payments: [{ id: newId(), userId: user.id, userName: user.name, phone: user.phone, planId: plan.id, planName: plan.name, amount: plan.price, days: plan.days, method, status: "Pending", createdAt: Date.now() }, ...d.payments],
-    }));
+    userRequestPayment({ data: { token: getUserToken(), planId: plan.id, method } })
+      .then((p) => updateLocal((d) => ({ ...d, payments: [p, ...d.payments] })))
+      .catch(() => toast.error("Could not save your payment request. Please sign in again."));
   };
 
   const manual = () => {
@@ -42,10 +43,14 @@ export function PayDialog({ plan, onOpenChange }: { plan: Plan | null; onOpenCha
         {sent ? (
           <div className="space-y-2 rounded-lg bg-muted p-4 text-sm">
             <p className="font-semibold text-success">Payment request received!</p>
-            <p>Send <b>{ugx(plan.price)}</b> and your plan activates as soon as the admin confirms. Check “My Account” for your expiry date.</p>
+            <p>Send <b>{ugx(plan.price)}</b> by MTN MoMo to <b>{momo}</b>, then your plan activates as soon as the admin confirms. Check “My Account” for your expiry date.</p>
           </div>
         ) : (
           <div className="space-y-3">
+            <div className="rounded-lg border border-border bg-muted p-3 text-sm">
+              <p className="font-semibold">MTN MoMo: send {ugx(plan.price)} to <span className="text-primary">{momo}</span></p>
+              <p className="text-muted-foreground">Dial *165# → Send Money. Then tap WhatsApp below so VJ Emma can activate your VIP.</p>
+            </div>
             <Button variant="hero" className="h-12 w-full" onClick={pesapal} disabled={!pesapalReady}>
               <Smartphone /> Pay with MTN MoMo / Airtel Money via Pesapal
             </Button>

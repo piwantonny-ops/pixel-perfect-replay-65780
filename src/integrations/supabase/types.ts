@@ -14,7 +14,177 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      movies: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          days: number
+          id: string
+          method: string
+          phone: string
+          plan_id: string
+          plan_name: string
+          status: string
+          user_id: string
+          user_name: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          days: number
+          id: string
+          method: string
+          phone: string
+          plan_id: string
+          plan_name: string
+          status?: string
+          user_id: string
+          user_name: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          days?: number
+          id?: string
+          method?: string
+          phone?: string
+          plan_id?: string
+          plan_name?: string
+          status?: string
+          user_id?: string
+          user_name?: string
+        }
+        Relationships: []
+      }
+      site_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          blocked: boolean
+          created_at: string
+          expires_at: number | null
+          id: string
+          name: string
+          password_hash: string
+          phone: string
+          plan_name: string | null
+          session_token: string | null
+          watchlist: Json
+        }
+        Insert: {
+          blocked?: boolean
+          created_at?: string
+          expires_at?: number | null
+          id: string
+          name: string
+          password_hash: string
+          phone: string
+          plan_name?: string | null
+          session_token?: string | null
+          watchlist?: Json
+        }
+        Update: {
+          blocked?: boolean
+          created_at?: string
+          expires_at?: number | null
+          id?: string
+          name?: string
+          password_hash?: string
+          phone?: string
+          plan_name?: string | null
+          session_token?: string | null
+          watchlist?: Json
+        }
+        Relationships: []
+      }
+      vip_plans: {
+        Row: {
+          created_at: string
+          days: number
+          id: string
+          name: string
+          price: number
+        }
+        Insert: {
+          created_at?: string
+          days: number
+          id: string
+          name: string
+          price: number
+        }
+        Update: {
+          created_at?: string
+          days?: number
+          id?: string
+          name?: string
+          price?: number
+        }
+        Relationships: []
+      }
+      vip_products: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          image: string
+          name: string
+          price: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id: string
+          image?: string
+          name: string
+          price?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          image?: string
+          name?: string
+          price?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

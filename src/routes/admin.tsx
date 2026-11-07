@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { SeasonEditor } from "@/components/site/SeasonEditor";
 import {
   useDB, useSession, update, setAdmin, isActive, markPaymentPaid, ugx, fmtDate, newId, slugify, ROWS, categoryName,
-  saveSettings, type Movie, type Settings, type Badge,
+  saveSettings, loginAdmin, type Movie, type Settings, type Badge,
 } from "@/lib/store";
 
 export const Route = createFileRoute("/admin")({
@@ -38,7 +38,6 @@ function SettingsSection({ title, children }: { title: string; children: React.R
 }
 
 function AdminLogin() {
-  const { settings } = useDB();
   const [u, setU] = useState("");
   const [p, setP] = useState("");
   return (
@@ -47,8 +46,7 @@ function AdminLogin() {
         className="w-full max-w-sm space-y-3 rounded-2xl bg-card p-6 shadow-glow"
         onSubmit={(e) => {
           e.preventDefault();
-          if (u === settings.adminUser && p === settings.adminPassword) { setAdmin(true); toast.success("Welcome, admin"); }
-          else toast.error("Wrong username or PIN");
+          loginAdmin(u, p).then(() => toast.success("Welcome, admin")).catch(() => toast.error("Wrong username or PIN"));
         }}
       >
         <h1 className="font-display text-4xl tracking-wide">Admin Login</h1>
@@ -73,12 +71,13 @@ function AdminPage() {
       </div>
       <Tabs defaultValue="overview">
         <TabsList className="no-scrollbar w-full justify-start overflow-x-auto">
-          {["overview", "media", "users", "wallet", "settings"].map((t) => (
+          {["overview", "media", "shop", "users", "wallet", "settings"].map((t) => (
             <TabsTrigger key={t} value={t} className="capitalize">{t === "users" ? "Users / Clients" : t}</TabsTrigger>
           ))}
         </TabsList>
         <TabsContent value="overview"><Overview /></TabsContent>
         <TabsContent value="media"><Media /></TabsContent>
+        <TabsContent value="shop"><ShopAdmin /></TabsContent>
         <TabsContent value="users"><Users /></TabsContent>
         <TabsContent value="wallet"><Wallet /></TabsContent>
         <TabsContent value="settings"><SettingsTab /></TabsContent>
@@ -430,6 +429,7 @@ function SettingsTab() {
         <Button variant="hero" onClick={() => save("App release")}>Save app release</Button>
       </SettingsSection>
       <SettingsSection title="Social settings">
+        {F("MTN MoMo number (for VIP payments)", "momoNumber", "tel")}
         {F("WhatsApp 1", "whatsapp", "tel")}
         {F("WhatsApp 2", "whatsapp2", "tel")}
         {F("TikTok Link", "tiktok")}
@@ -447,6 +447,47 @@ function SettingsTab() {
         <Button variant="hero" onClick={() => { if (s.adminPassword.length < 4) { toast.error("Password must be at least 4 characters"); return; } save("Site settings"); }}>Save site settings</Button>
       </SettingsSection>
       <div className="md:col-span-2"><Taxonomy /></div>
+    </div>
+  );
+}
+
+function ShopAdmin() {
+  const db = useDB();
+  const blank = { name: "", price: "", image: "", description: "" };
+  const [f, setF] = useState(blank);
+  const [editing, setEditing] = useState<string | null>(null);
+  const save = () => {
+    const price = Number(f.price);
+    if (!f.name.trim() || !price) { toast.error("Fill product name and price"); return; }
+    const item = { id: editing ?? newId(), name: f.name.trim(), price, image: f.image.trim(), description: f.description.trim() };
+    update((d) => ({ ...d, products: editing ? d.products.map((x) => (x.id === editing ? item : x)) : [item, ...d.products] }));
+    toast.success(editing ? "Product updated" : "Product added");
+    setF(blank); setEditing(null);
+  };
+  return (
+    <div className="grid gap-4 pt-3 md:grid-cols-2">
+      <div className="space-y-2 rounded-xl bg-card p-4">
+        <h3 className="font-display text-2xl">{editing ? "Edit product" : "Add VIP product"}</h3>
+        <Input placeholder="Product name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
+        <Input placeholder="Price UGX" type="number" value={f.price} onChange={(e) => setF({ ...f, price: e.target.value })} />
+        <Input placeholder="Image link (https://…)" value={f.image} onChange={(e) => setF({ ...f, image: e.target.value })} />
+        <Textarea placeholder="Description" value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} />
+        <div className="flex gap-2">
+          <Button variant="hero" onClick={save}>{editing ? "Save product" : <><Plus /> Add product</>}</Button>
+          {editing && <Button variant="ghost" onClick={() => { setEditing(null); setF(blank); }}>Cancel</Button>}
+        </div>
+      </div>
+      <ul className="space-y-2">
+        {db.products.length === 0 && <p className="text-sm text-muted-foreground">No shop products yet.</p>}
+        {db.products.map((p) => (
+          <li key={p.id} className="flex items-center gap-3 rounded-xl bg-card p-3">
+            {p.image ? <img src={p.image} alt={p.name} className="h-12 w-12 rounded object-cover" /> : <div className="h-12 w-12 rounded bg-muted" />}
+            <div className="min-w-0 flex-1"><p className="truncate font-semibold">{p.name}</p><p className="text-sm text-muted-foreground">{ugx(p.price)}</p></div>
+            <Button size="icon" variant="ghost" aria-label="Edit product" onClick={() => { setEditing(p.id); setF({ name: p.name, price: String(p.price), image: p.image, description: p.description }); }}><Pencil /></Button>
+            <Button size="icon" variant="ghost" aria-label="Delete product" onClick={() => confirm(`Delete ${p.name}?`) && update((d) => ({ ...d, products: d.products.filter((x) => x.id !== p.id) }))}><Trash2 className="text-destructive" /></Button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

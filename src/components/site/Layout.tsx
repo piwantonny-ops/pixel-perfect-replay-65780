@@ -2,7 +2,7 @@ import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { Bell, Facebook, Menu, MessageCircle, Music2, Search, Shield, User, Youtube } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { useDB, useSession, setSessionUser, isActive, fmtDate, normalizePhone } from "@/lib/store";
+import { useDB, useSession, signOutUser, isActive, fmtDate, normalizePhone } from "@/lib/store";
 import { AuthDialog } from "./AuthDialog";
 import { toast } from "sonner";
 
@@ -54,11 +54,11 @@ function Header() {
               )}
             </div>
             <div className="mt-4 flex flex-col gap-1 text-sm">
-              {([["/", "Home"], ["/plans", "Subscription Plans"], ["/account", "My Account & Watchlist"], ["/about", "About Us"], ["/contact", "Contact"], ["/terms", "Terms"], ["/privacy", "Privacy"]] as const).map(([to, l]) => (
+              {([["/", "Home"], ["/vip", "VIP — Pay with MTN MoMo"], ["/shop", "Shop"], ["/account", "My Account & Watchlist"], ["/about", "About Us"], ["/contact", "Contact"], ["/terms", "Terms"], ["/privacy", "Privacy"]] as const).map(([to, l]) => (
                 <Link key={to} to={to} onClick={close} className="rounded px-2 py-2 hover:bg-muted">{l}</Link>
               ))}
               <Link to="/search" search={{ q: "" }} onClick={close} className="rounded px-2 py-2 hover:bg-muted">Search</Link>
-              {user && <button className="rounded px-2 py-2 text-left text-destructive hover:bg-muted" onClick={() => { setSessionUser(null); close(); toast.success("Signed out"); nav({ to: "/" }); }}>Sign out</button>}
+              {user && <button className="rounded px-2 py-2 text-left text-destructive hover:bg-muted" onClick={() => { signOutUser(); close(); toast.success("Signed out"); nav({ to: "/" }); }}>Sign out</button>}
             </div>
           </SheetContent>
         </Sheet>

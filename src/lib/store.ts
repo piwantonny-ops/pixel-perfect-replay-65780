@@ -3,6 +3,7 @@ import banner1 from "@/assets/banner-1.jpg";
 import banner2 from "@/assets/banner-2.jpg";
 import poster1 from "@/assets/poster-1.jpg";
 import poster2 from "@/assets/poster-2.jpg";
+import { getPublicData, adminLogin, adminSync, userMe } from "./vj.functions";
 
 export type Badge = "TOP" | "VIP" | "Exclusive" | "None";
 export interface Episode { id: string; number: number; title: string; videoUrl: string; duration: string; thumbnail: string }
@@ -41,6 +42,7 @@ export interface Payment {
   id: string; userId: string; userName: string; phone: string; planId: string; planName: string;
   amount: number; days: number; method: "pesapal" | "manual"; status: "Paid" | "Pending"; createdAt: number;
 }
+export interface Product { id: string; name: string; price: number; image: string; description: string }
 export interface Comment { id: string; movieId: string; name: string; text: string; createdAt: number }
 export interface Rating { movieId: string; key: string; stars: number }
 export interface Settings {
@@ -51,10 +53,11 @@ export interface Settings {
   r2Endpoint: string; r2Token: string; r2AccessKey: string; r2Secret: string; r2PublicUrl: string;
   appVersion: string; appLink: string; appNotes: string; appFileUrl: string;
   liveTvChannels: number;
+  momoNumber?: string; pesapalReady?: boolean;
 }
 export interface DB {
   contactLinksVersion?: number;
-  movies: Movie[]; categories: Category[]; genres: Genre[]; plans: Plan[]; users: User[];
+  movies: Movie[]; products: Product[]; categories: Category[]; genres: Genre[]; plans: Plan[]; users: User[];
   payments: Payment[]; comments: Comment[]; ratings: Rating[]; settings: Settings;
 }
 
@@ -109,6 +112,7 @@ export function seedDB(): DB {
   return {
     contactLinksVersion: 1,
     movies: seedMovies(),
+    products: [],
     categories: CATS.map((name) => ({ id: slug(name), name, slug: slug(name) })),
     genres: GENRES.map((name) => ({ id: slug(name), name })),
     plans: [
@@ -119,11 +123,11 @@ export function seedDB(): DB {
     ],
     users: [], payments: [], comments: [], ratings: [],
     settings: {
-      siteName: "VJEMMA MOVIES", logoText: "VJ EMMA", tagline: "VJ EMMA - Translated Movies",
+      siteName: "VJEMMA MOVIES", logoText: "VJ EMMA", tagline: "VJ Emma — Movies translated to Luo · Obangaber Cinema Club",
       adminUser: "admin", adminPassword: "1234",
       whatsapp: "0776043203", whatsapp2: "0779818746", tiktok: "https://www.tiktok.com/@vjemmaoffical", youtube: "https://youtube.com/@vjemmaofficial", facebook: "",
       pesapalKey: "", pesapalSecret: "", r2Endpoint: "", r2Token: "", r2AccessKey: "", r2Secret: "", r2PublicUrl: "",
-      appVersion: "1.0.4", appLink: "", appNotes: "", appFileUrl: "", liveTvChannels: 0,
+      appVersion: "1.0.4", appLink: "", appNotes: "", appFileUrl: "", liveTvChannels: 0, momoNumber: "0776043203",
     },
   };
 }
@@ -142,7 +146,7 @@ export function restoreDB(parsed: Partial<DB>): DB {
     settings.youtube = SERVER.settings.youtube;
     if (settings.facebook === "https://www.facebook.com/") settings.facebook = "";
   }
-  return { ...SERVER, ...parsed, settings, contactLinksVersion: 1 };
+  return { ...SERVER, ...parsed, products: parsed.products ?? [], settings, contactLinksVersion: 1 };
 }
 
 export function seriesEpisodes(m: Movie) {
@@ -171,12 +175,98 @@ function load(): DB {
   return state;
 }
 
-export function update(fn: (db: DB) => DB) {
-  const next = fn(load());
-  localStorage.setItem(KEY, JSON.stringify(next));
+function commit(next: DB) {
+  try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* quota */ }
   state = next;
   listeners.forEach((l) => l());
 }
+
+export function update(fn: (db: DB) => DB) {
+  const prev = load();
+  const next = fn(prev);
+  commit(next);
+  void persist(prev, next);
+}
+
+/* ---------- Supabase sync ---------- */
+const ADMIN_AUTH = "vjemma-admin-auth";
+const TOKEN = "vjemma-token";
+export const getAdminAuth = () => { try { return JSON.parse(sessionStorage.getItem(ADMIN_AUTH) || "null") as { u: string; p: string } | null; } catch { return null; } };
+export const getUserToken = () => localStorage.getItem(TOKEN) ?? "";
+
+async function persist(prev: DB, next: DB) {
+  const auth = getAdminAuth();
+  if (!auth || !readSession().admin) return;
+  const payload: Parameters<typeof adminSync>[0]["data"] = { auth };
+  if (prev.movies !== next.movies) payload.movies = next.movies as never;
+  if (prev.plans !== next.plans) payload.plans = next.plans as never;
+  if (prev.products !== next.products) payload.products = next.products as never;
+  if (prev.settings !== next.settings) payload.settings = next.settings as never;
+  if (prev.categories !== next.categories) payload.categories = next.categories as never;
+  if (prev.genres !== next.genres) payload.genres = next.genres as never;
+  if (prev.users !== next.users) payload.users = next.users as never;
+  if (prev.payments !== next.payments) payload.payments = next.payments as never;
+  if (Object.keys(payload).length === 1) return;
+  try { await adminSync({ data: payload }); }
+  catch (e) { console.error(e); import("sonner").then(({ toast }) => toast.error("Could not save to the database. Check your connection.")); }
+}
+
+let hydrated = false;
+export async function refreshFromServer() {
+  const pub = await getPublicData();
+  if (pub.ok) {
+    const cur = load();
+    const ps = (pub.settings ?? {}) as Partial<DB> & { settings?: Partial<Settings> };
+    commit({
+      ...cur,
+      movies: pub.movies.length ? (pub.movies as unknown as Movie[]) : cur.movies,
+      plans: pub.plans.length ? (pub.plans as unknown as Plan[]) : cur.plans,
+      products: pub.products as unknown as Product[],
+      categories: ps.categories ?? cur.categories,
+      genres: ps.genres ?? cur.genres,
+      settings: ps.settings ? { ...cur.settings, ...ps.settings } : cur.settings,
+    });
+  }
+  const token = getUserToken();
+  if (token) {
+    const me = await userMe({ data: { token } });
+    if (me.user) {
+      const cur = load();
+      commit({ ...cur, users: [me.user, ...cur.users.filter((u) => u.id !== me.user!.id)],
+        payments: [...me.payments, ...cur.payments.filter((p) => p.userId !== me.user!.id)] });
+    } else { localStorage.removeItem(TOKEN); setSessionUser(null); }
+  }
+  const auth = getAdminAuth();
+  if (auth && readSession().admin) await loginAdmin(auth.u, auth.p).catch(() => setAdmin(false));
+  return pub.ok;
+}
+
+/** Verifies admin on the server, loads private data and uploads any collections the database is still missing. */
+export async function loginAdmin(u: string, p: string) {
+  const res = await adminLogin({ data: { u, p } });
+  sessionStorage.setItem(ADMIN_AUTH, JSON.stringify({ u, p }));
+  const pub = await getPublicData();
+  const cur = load();
+  commit({ ...cur, users: res.users, payments: res.payments, settings: { ...cur.settings, ...res.privateSettings } });
+  if (pub.ok) {
+    const missing: Parameters<typeof adminSync>[0]["data"] = { auth: { u, p } };
+    if (!pub.movies.length && cur.movies.length) missing.movies = cur.movies as never;
+    if (!pub.settings) { missing.settings = load().settings as never; missing.categories = cur.categories as never; missing.genres = cur.genres as never; }
+    if (Object.keys(missing).length > 1) await adminSync({ data: missing });
+  }
+  setAdmin(true);
+}
+
+export function signInUser(user: User, token: string) {
+  localStorage.setItem(TOKEN, token);
+  const cur = load();
+  commit({ ...cur, users: [user, ...cur.users.filter((u) => u.id !== user.id)] });
+  setSessionUser(user.id);
+}
+export function signOutUser() { localStorage.removeItem(TOKEN); setSessionUser(null); }
+
+/** Local-only state change (already saved on the server by a dedicated call). */
+export function updateLocal(fn: (db: DB) => DB) { commit(fn(load())); }
 
 export function saveSettings(settings: Settings, plans: Plan[]) {
   update((db) => ({ ...db, settings: { ...settings }, plans: plans.map((p) => ({ ...p })) }));
@@ -184,6 +274,7 @@ export function saveSettings(settings: Settings, plans: Plan[]) {
 
 function subscribe(l: () => void) {
   listeners.add(l);
+  if (!hydrated) { hydrated = true; void refreshFromServer().catch((e) => console.error(e)); }
   const onStorage = (e: StorageEvent) => { if (e.key === KEY || e.key === SESSION) { state = null; l(); } };
   window.addEventListener("storage", onStorage);
   return () => { listeners.delete(l); window.removeEventListener("storage", onStorage); };
@@ -216,7 +307,7 @@ export function setSessionUser(id: string | null) {
   emit();
 }
 export function setAdmin(on: boolean) {
-  if (on) sessionStorage.setItem(ADMIN, "1"); else sessionStorage.removeItem(ADMIN);
+  if (on) sessionStorage.setItem(ADMIN, "1"); else { sessionStorage.removeItem(ADMIN); sessionStorage.removeItem("vjemma-admin-auth"); }
   emit();
 }
 
