@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import type { Obj, AdminAuth } from "./vj.server";
+import type { Json } from "@/integrations/supabase/types";
 
 /* All database access goes through these server functions. Customer accounts,
    payments and secret keys are never readable from the browser directly. */
@@ -26,7 +27,7 @@ export const getPublicData = createServerFn({ method: "GET" }).handler(async () 
     return { ok: false, movies: [], plans: [], products: [], settings: null } as unknown as PublicData;
   }
 });
-export interface PublicData { ok: boolean; movies: Obj[]; plans: Obj[]; products: Obj[]; settings: Obj | null }
+export interface PublicData { ok: boolean; movies: Record<string, Json>[]; plans: Record<string, Json>[]; products: Record<string, Json>[]; settings: Record<string, Json> | null }
 
 export const adminLogin = createServerFn({ method: "POST" })
   .inputValidator((d: AdminAuth) => d)
@@ -142,3 +143,14 @@ export const userRequestPayment = createServerFn({ method: "POST" })
     if (error) throw new Error("Could not save payment request");
     return toPayment(saved);
   });
+
+export const adminSaveMovie = createServerFn({ method: "POST" })
+ .inputValidator((d: { auth: AdminAuth; movie: import("./store").Movie }) => d)
+ .handler(async ({ data }) => {
+   const { checkAdmin } = await import("./vj.server");
+   const { db } = await checkAdmin(data.auth);
+   if (!data.movie.id || !data.movie.title.trim() || !data.movie.poster.trim()) throw new Error("Title and poster are required");
+   const { error } = await db.from("movies").upsert({ id: data.movie.id, data: data.movie, updated_at: new Date().toISOString() });
+   if (error) throw new Error("Could not save movie to Supabase");
+   return { ok: true };
+ });

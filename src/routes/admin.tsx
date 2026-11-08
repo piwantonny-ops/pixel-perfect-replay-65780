@@ -10,10 +10,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { MovieUpload } from "@/components/site/MovieUpload";
 import { SeasonEditor } from "@/components/site/SeasonEditor";
 import {
   useDB, useSession, update, setAdmin, isActive, markPaymentPaid, ugx, fmtDate, newId, slugify, ROWS, categoryName,
-  saveSettings, loginAdmin, type Movie, type Settings, type Badge,
+  saveSettings, loginAdmin, saveMovie, type Movie, type Settings, type Badge,
 } from "@/lib/store";
 
 export const Route = createFileRoute("/admin")({
@@ -143,9 +144,11 @@ const emptyMovie = (): Movie => ({
 function MovieForm({ movie, onClose }: { movie: Movie; onClose: () => void }) {
   const db = useDB();
   const [m, setM] = useState<Movie>(movie);
+  const [uploadBusy, setUploadBusy] = useState(false);
+  const [saving, setSaving] = useState(false);
   const set = <K extends keyof Movie>(k: K, v: Movie[K]) => setM((x) => ({ ...x, [k]: v }));
   const toggle = (k: "genres" | "rows", v: string) => set(k, m[k].includes(v) ? m[k].filter((x) => x !== v) : [...m[k], v]);
-  const save = () => {
+  const save = async (videoUrl = m.videoUrl) => {
     if (!m.title.trim() || !m.poster.trim()) { toast.error("Title and Poster URL are required"); return; }
     if (m.type === "series") {
       const seasons = m.seasons ?? [];
@@ -153,15 +156,16 @@ function MovieForm({ movie, onClose }: { movie: Movie; onClose: () => void }) {
         toast.error("Add unique seasons and episodes with a title and video link for each episode"); return;
       }
     }
-    if (movie.id) {
-      update((d) => ({ ...d, movies: d.movies.map((x) => (x.id === movie.id ? m : x)) }));
-    } else {
-      let id = slugify(m.title) || newId();
-      if (db.movies.some((x) => x.id === id)) id = `${id}-${newId().slice(0, 4)}`;
-      update((d) => ({ ...d, movies: [{ ...m, id, createdAt: Date.now() }, ...d.movies] }));
-    }
-    toast.success("Content saved");
-    onClose();
+    setSaving(true);
+    try {
+      const saved = await saveMovie({ ...m, videoUrl });
+      setM(saved);
+      toast.success("Content saved to Supabase");
+      if (!uploadBusy) onClose();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Movie could not be saved");
+      throw error;
+    } finally { setSaving(false); }
   };
   const F = ({ label, k, ph }: { label: string; k: keyof Movie; ph?: string }) => (
     <div className="space-y-1"><Label>{label}</Label><Input placeholder={ph} value={String(m[k] ?? "")} onChange={(e) => set(k, (k === "year" ? Number(e.target.value) : e.target.value) as never)} /></div>
@@ -186,6 +190,11 @@ function MovieForm({ movie, onClose }: { movie: Movie; onClose: () => void }) {
       {F({ label: "Poster Image URL *", k: "poster", ph: "https://…/poster.jpg" })}
       {F({ label: "Banner Image URL (carousel)", k: "banner", ph: "https://…/banner.jpg" })}
       {m.type !== "series" && F({ label: "Video Link", k: "videoUrl", ph: "https://…/movie.mp4" })}
+      {m.type !== "series" && <MovieUpload onBusy={setUploadBusy} onUploaded={async (url) => {
+        set("videoUrl", url);
+        if (!m.title.trim() || !m.poster.trim()) throw new Error("Video uploaded. Add the title and poster, then save content.");
+        await save(url);
+      }} />}
       {m.type === "series" && <SeasonEditor seasons={m.seasons ?? []} onChange={(seasons) => set("seasons", seasons)} />}
       {F({ label: "Trailer URL", k: "trailerUrl" })}
       {F({ label: "Download URL (optional)", k: "downloadUrl" })}
@@ -203,7 +212,7 @@ function MovieForm({ movie, onClose }: { movie: Movie; onClose: () => void }) {
       <label className="flex items-center gap-2 text-sm"><Switch checked={m.isFree} onCheckedChange={(v) => set("isFree", v)} /> Free (off = VIP)</label>
       <label className="flex items-center gap-2 text-sm"><Switch checked={m.completed} onCheckedChange={(v) => set("completed", v)} /> Completed (off = Ongoing)</label>
       <label className="flex items-center gap-2 text-sm"><Switch checked={m.featured} onCheckedChange={(v) => set("featured", v)} /> Featured in carousel</label>
-      <div className="flex gap-2 sm:col-span-2"><Button variant="hero" onClick={save}>Save content</Button><Button variant="ghost" onClick={onClose}>Cancel</Button></div>
+      <div className="flex gap-2 sm:col-span-2"><Button variant="hero" disabled={uploadBusy || saving} onClick={() => void save().catch(() => {})}>Save content</Button><Button variant="ghost" disabled={uploadBusy || saving} onClick={onClose}>Cancel</Button></div>
     </div>
   );
 }

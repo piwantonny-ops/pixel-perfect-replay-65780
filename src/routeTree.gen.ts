@@ -17,7 +17,9 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as PlansRouteImport } from './routes/plans'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as ShopRouteImport } from './routes/shop'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as VipRouteImport } from './routes/vip'
 import { Route as BrowseRowRouteImport } from './routes/browse.$row'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as MovieIdRouteImport } from './routes/movie.$id'
@@ -62,9 +64,19 @@ const SearchRoute = SearchRouteImport.update({
   path: '/search',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShopRoute = ShopRouteImport.update({
+  id: '/shop',
+  path: '/shop',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VipRoute = VipRouteImport.update({
+  id: '/vip',
+  path: '/vip',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BrowseRowRoute = BrowseRowRouteImport.update({
@@ -92,7 +104,9 @@ export interface FileRoutesByFullPath {
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
+  '/shop': typeof ShopRoute
   '/terms': typeof TermsRoute
+  '/vip': typeof VipRoute
   '/browse/$row': typeof BrowseRowRoute
   '/category/$slug': typeof CategorySlugRoute
   '/movie/$id': typeof MovieIdRoute
@@ -106,7 +120,9 @@ export interface FileRoutesByTo {
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
+  '/shop': typeof ShopRoute
   '/terms': typeof TermsRoute
+  '/vip': typeof VipRoute
   '/browse/$row': typeof BrowseRowRoute
   '/category/$slug': typeof CategorySlugRoute
   '/movie/$id': typeof MovieIdRoute
@@ -121,7 +137,9 @@ export interface FileRoutesById {
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
+  '/shop': typeof ShopRoute
   '/terms': typeof TermsRoute
+  '/vip': typeof VipRoute
   '/browse/$row': typeof BrowseRowRoute
   '/category/$slug': typeof CategorySlugRoute
   '/movie/$id': typeof MovieIdRoute
@@ -137,7 +155,9 @@ export interface FileRouteTypes {
     | '/plans'
     | '/privacy'
     | '/search'
+    | '/shop'
     | '/terms'
+    | '/vip'
     | '/browse/$row'
     | '/category/$slug'
     | '/movie/$id'
@@ -151,7 +171,9 @@ export interface FileRouteTypes {
     | '/plans'
     | '/privacy'
     | '/search'
+    | '/shop'
     | '/terms'
+    | '/vip'
     | '/browse/$row'
     | '/category/$slug'
     | '/movie/$id'
@@ -165,7 +187,9 @@ export interface FileRouteTypes {
     | '/plans'
     | '/privacy'
     | '/search'
+    | '/shop'
     | '/terms'
+    | '/vip'
     | '/browse/$row'
     | '/category/$slug'
     | '/movie/$id'
@@ -180,7 +204,9 @@ export interface RootRouteChildren {
   PlansRoute: typeof PlansRoute
   PrivacyRoute: typeof PrivacyRoute
   SearchRoute: typeof SearchRoute
+  ShopRoute: typeof ShopRoute
   TermsRoute: typeof TermsRoute
+  VipRoute: typeof VipRoute
   BrowseRowRoute: typeof BrowseRowRoute
   CategorySlugRoute: typeof CategorySlugRoute
   MovieIdRoute: typeof MovieIdRoute
@@ -244,11 +270,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/shop': {
+      id: '/shop'
+      path: '/shop'
+      fullPath: '/shop'
+      preLoaderRoute: typeof ShopRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terms': {
       id: '/terms'
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vip': {
+      id: '/vip'
+      path: '/vip'
+      fullPath: '/vip'
+      preLoaderRoute: typeof VipRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/browse/$row': {
@@ -284,7 +324,9 @@ const rootRouteChildren: RootRouteChildren = {
   PlansRoute: PlansRoute,
   PrivacyRoute: PrivacyRoute,
   SearchRoute: SearchRoute,
+  ShopRoute: ShopRoute,
   TermsRoute: TermsRoute,
+  VipRoute: VipRoute,
   BrowseRowRoute: BrowseRowRoute,
   CategorySlugRoute: CategorySlugRoute,
   MovieIdRoute: MovieIdRoute,

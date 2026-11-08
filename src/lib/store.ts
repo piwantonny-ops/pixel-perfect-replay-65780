@@ -3,7 +3,7 @@ import banner1 from "@/assets/banner-1.jpg";
 import banner2 from "@/assets/banner-2.jpg";
 import poster1 from "@/assets/poster-1.jpg";
 import poster2 from "@/assets/poster-2.jpg";
-import { getPublicData, adminLogin, adminSync, userMe } from "./vj.functions";
+import { getPublicData, adminLogin, adminSync, userMe, adminSaveMovie } from "./vj.functions";
 
 export type Badge = "TOP" | "VIP" | "Exclusive" | "None";
 export interface Episode { id: string; number: number; title: string; videoUrl: string; duration: string; thumbnail: string }
@@ -36,7 +36,7 @@ export interface Genre { id: string; name: string }
 export interface Plan { id: string; name: string; price: number; days: number }
 export interface User {
   id: string; name: string; phone: string; password: string;
-  blocked: boolean; planName?: string; expiresAt?: number; watchlist: string[]; createdAt: number;
+  blocked: boolean; planName?: string | undefined; expiresAt?: number | undefined; watchlist: string[]; createdAt: number;
 }
 export interface Payment {
   id: string; userId: string; userName: string; phone: string; planId: string; planName: string;
@@ -350,4 +350,16 @@ export function categoryName(db: DB, s: string) {
 export function avgRating(db: DB, movieId: string) {
   const r = db.ratings.filter((x) => x.movieId === movieId);
   return r.length ? r.reduce((a, b) => a + b.stars, 0) / r.length : 0;
+}
+
+export async function saveMovie(movie: Movie): Promise<Movie> {
+  const auth = getAdminAuth();
+  if (!auth) throw new Error("Please sign in as admin");
+  const cur = load();
+  let id = movie.id || slugify(movie.title) || newId();
+  if (!movie.id && cur.movies.some((m) => m.id === id)) id += `-${newId()}`;
+  const next = { ...movie, id, createdAt: movie.createdAt || Date.now() };
+  await adminSaveMovie({ data: { auth, movie: next } });
+  updateLocal((db) => ({ ...db, movies: [next, ...db.movies.filter((m) => m.id !== id)] }));
+  return next;
 }
