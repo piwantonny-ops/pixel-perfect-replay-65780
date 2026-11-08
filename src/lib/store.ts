@@ -93,6 +93,7 @@ function seedMovies(): Movie[] {
     ["Star Raiders", "animation", ["SciFi", "Adventure"], banner2, banner2, "None", true],
     ["Old Warrior", "old-skull", ["Action"], banner1, banner1, "TOP", false],
     ["Grace Abounding", "christian-movies", ["Drama"], poster1, banner2, "None", true],
+     ["God of War", "movies", ... "TOP", false],
   ];
   const rowSets = [
     ["latest", "trending", "top50"], ["latest", "trending", "recommended"], ["latest", "week"],
