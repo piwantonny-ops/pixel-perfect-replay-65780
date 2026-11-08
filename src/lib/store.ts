@@ -176,7 +176,7 @@ function load(): DB {
 }
 
 function commit(next: DB) {
-  try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* quota */ }
+  localStorage.setItem(KEY, JSON.stringify(next));
   state = next;
   listeners.forEach((l) => l());
 }
@@ -231,9 +231,10 @@ export async function refreshFromServer() {
   if (token) {
     const me = await userMe({ data: { token } });
     if (me.user) {
+      const currentUser = me.user;
       const cur = load();
-      commit({ ...cur, users: [me.user, ...cur.users.filter((u) => u.id !== me.user!.id)],
-        payments: [...me.payments, ...cur.payments.filter((p) => p.userId !== me.user!.id)] });
+      commit({ ...cur, users: [me.user, ...cur.users.filter((u) => u.id !== currentUser.id)],
+        payments: [...me.payments, ...cur.payments.filter((p) => p.userId !== currentUser.id)] });
     } else { localStorage.removeItem(TOKEN); setSessionUser(null); }
   }
   const auth = getAdminAuth();
