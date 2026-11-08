@@ -1,0 +1,2 @@
+CREATE POLICY "Customers are accessible only through verified server sessions" ON public.users FOR ALL TO anon, authenticated USING (false) WITH CHECK (false);
+CREATE POLICY "Payments are accessible only through verified server sessions" ON public.payments FOR ALL TO anon, authenticated USING (false) WITH CHECK (false);
