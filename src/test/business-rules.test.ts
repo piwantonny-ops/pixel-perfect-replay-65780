@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { canWatch, extendExpiry, isActive, normalizePhone, seedDB } from "@/lib/store";
+import { canWatch, extendExpiry, isActive, normalizePhone, seedDB, restoreDB } from "@/lib/store";
+import { isAdminEmail } from "@/lib/vj.server";
 
 const DAY = 86400000;
 
@@ -8,9 +9,18 @@ describe("VJEMMA business rules", () => {
     const plans = seedDB().plans.map((p) => [p.name, p.price, p.days]);
     expect(plans).toEqual([["1 Day", 2000, 1], ["3 Days", 3000, 3], ["1 Week", 7000, 7], ["1 Month", 15000, 30]]);
   });
-  it("default admin login is admin / 1234", () => {
-    const s = seedDB().settings;
-    expect([s.adminUser, s.adminPassword]).toEqual(["admin", "1234"]);
+  it("admin login only accepts piwantonny@gmail.com", () => {
+    expect(isAdminEmail("piwantonny@gmail.com")).toBe(true);
+    expect(isAdminEmail(" PiwanTonny@Gmail.com ")).toBe(true);
+    expect(isAdminEmail("admin")).toBe(false);
+    expect(isAdminEmail("someone@gmail.com")).toBe(false);
+  });
+  it("GOD OF WAR (completed) is built into the code and kept on every device", () => {
+    const gow = seedDB().movies.find((m) => m.id === "god-of-war");
+    expect(gow?.title).toBe("GOD OF WAR");
+    expect(gow?.completed).toBe(true);
+    expect(gow?.videoUrl).toMatch(/^https:\/\/vjemma-upload\.piwantonny\.workers\.dev\//);
+    expect(restoreDB({ movies: [] }).movies.map((m) => m.id)).toContain("god-of-war");
   });
   it("VIP movies need an active, unblocked subscription; free ones do not", () => {
     const vip = { ...seedDB().movies[0]!, isFree: false };

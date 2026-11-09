@@ -12,7 +12,6 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MovieUpload } from "@/components/site/MovieUpload";
 import { SeasonEditor } from "@/components/site/SeasonEditor";
-import { ADMIN_EMAIL } from "@/lib/admin-access";
 import {
   useDB, useSession, update, setAdmin, isActive, markPaymentPaid, ugx, fmtDate, newId, slugify, ROWS, categoryName,
   saveSettings, loginAdmin, saveMovie, type Movie, type Settings, type Badge,
@@ -40,25 +39,21 @@ function SettingsSection({ title, children }: { title: string; children: React.R
 }
 
 function AdminLogin() {
-  const [u, setU] = useState(ADMIN_EMAIL);
+  const [u, setU] = useState("");
   const [p, setP] = useState("");
-  const [error, setError] = useState("");
-  const [pending, setPending] = useState(false);
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <form
         className="w-full max-w-sm space-y-3 rounded-2xl bg-card p-6 shadow-glow"
         onSubmit={(e) => {
           e.preventDefault();
-          setError(""); setPending(true);
-          loginAdmin(u, p).then(() => toast.success("Welcome, admin")).catch((err: unknown) => setError(err instanceof Error ? err.message : "Could not sign in")).finally(() => setPending(false));
+          loginAdmin(u, p).then(() => toast.success("Welcome, admin")).catch(() => toast.error("Wrong email or password"));
         }}
       >
         <h1 className="font-display text-4xl tracking-wide">Admin Login</h1>
-        <Input type="email" autoComplete="username" placeholder="Email" value={u} onChange={(e) => setU(e.target.value)} required />
-        <Input type="password" autoComplete="current-password" placeholder="Password" value={p} onChange={(e) => setP(e.target.value)} required />
-        {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-        <Button type="submit" variant="hero" className="w-full" disabled={pending}>{pending ? "Signing in…" : "Log in"}</Button>
+        <Input type="email" autoComplete="username" placeholder="Email" value={u} onChange={(e) => setU(e.target.value)} />
+        <Input type="password" autoComplete="current-password" placeholder="Password" value={p} onChange={(e) => setP(e.target.value)} />
+        <Button type="submit" variant="hero" className="w-full">Log in</Button>
         <Link to="/" className="block text-center text-sm text-muted-foreground">← Back to site</Link>
       </form>
     </div>
@@ -456,7 +451,9 @@ function SettingsTab() {
         {F("Logo Text", "logoText")}
         {F("Tagline", "tagline")}
         {F("Live TV channels count", "liveTvChannels", "number")}
-        <Button variant="hero" onClick={() => save("Site settings")}>Save site settings</Button>
+        <p className="text-sm text-muted-foreground">Admin email: piwantonny@gmail.com</p>
+        {F("Admin Password", "adminPassword", "password")}
+        <Button variant="hero" onClick={() => { if (s.adminPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; } save("Site settings"); }}>Save site settings</Button>
       </SettingsSection>
       <div className="md:col-span-2"><Taxonomy /></div>
     </div>

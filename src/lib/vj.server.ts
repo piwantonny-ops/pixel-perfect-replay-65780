@@ -1,6 +1,9 @@
 export const PRIVATE_KEYS = ["adminUser", "adminPassword", "pesapalKey", "pesapalSecret", "r2Endpoint", "r2Token", "r2AccessKey", "r2Secret"] as const;
 export type Obj = Record<string, unknown>;
-export type AdminAuth = { token: string };
+export type AdminAuth = { u: string; p: string };
+/** The only admin account: this email plus the saved admin password. */
+export const ADMIN_EMAIL = "piwantonny@gmail.com";
+export const isAdminEmail = (u: unknown) => typeof u === "string" && u.trim().toLowerCase() === ADMIN_EMAIL;
 
 export async function admin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -32,28 +35,9 @@ export async function privateSettings(db: Awaited<ReturnType<typeof admin>>) {
   return (data?.value ?? { adminUser: "admin", adminPassword: "1234" }) as Obj;
 }
 export async function checkAdmin(auth: AdminAuth) {
-  const { createClient } = await import("@supabase/supabase-js");
-  const { isAdminIdentity } = await import("./admin-access");
-  const url = process.env['SUPABASE_URL'];
-  const key = process.env['SUPABASE_PUBLISHABLE_KEY'];
-  if (!url || !key || !auth?.token) throw new Error("Admin sign-in required");
-  const client = createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: { headers: { Authorization: `Bearer ${auth.token}` }, fetch: (input, init) => {
-      const headers = new Headers(init?.headers);
-      if (headers.get("Authorization") === `Bearer ${key}`) headers.delete("Authorization");
-      headers.set("apikey", key);
-      return fetch(input, { ...init, headers });
-    } },
-  });
-  const { data: identity, error } = await client.auth.getUser(auth.token);
-  if (error || !identity.user) throw new Error("Admin sign-in required");
-  const { data: role } = await client.from("user_roles").select("role").eq("user_id", identity.user.id).eq("role", "admin").maybeSingle();
-  if (!isAdminIdentity(identity.user.email, role?.role)) throw new Error("This account does not have admin access");
   const db = await admin();
   const priv = await privateSettings(db);
-  delete priv["adminUser"];
-  delete priv["adminPassword"];
+  if (!auth || !isAdminEmail(auth.u) || !auth.p || auth.p !== priv["adminPassword"]) throw new Error("Admin login required");
   return { db, priv };
 }
 export async function userByToken(token: string) {

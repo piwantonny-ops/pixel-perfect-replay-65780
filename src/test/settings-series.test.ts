@@ -21,7 +21,7 @@ describe("Settings persistence", () => {
     const legacy = { ...oldDB, settings: { ...db.settings, whatsapp: "256700000000" }, movies: [{ ...db.movies[0], id: "existing" } as Movie] };
     const restored = restoreDB(legacy);
     expect(restored.settings.whatsapp).toBe("0776043203");
-    expect(restored.movies.map((m) => m.id)).toEqual(["existing"]);
+    expect(restored.movies.map((m) => m.id)).toEqual(["god-of-war", "existing"]);
   });
   it("persists all settings and edited plans and keeps admin changes on reload", () => {
     const db = seedDB();

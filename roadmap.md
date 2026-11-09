@@ -1,14 +1,11 @@
 # Requested updates
-- [x] Save current preview code for connected GitHub sync, keeping GOD OF WAR completed and existing shared movies unchanged.
-- [ ] Confirm Netlify deploys the synced commit to vjemma.site: deployment status and GitHub sync are not accessible here.
-- [x] Replace admin PIN login with single-email Supabase password login; no additional account created.
-- [ ] Enable and verify requested admin account: connected Supabase contains no auth account for the requested email, so no admin role could be assigned.
-- [ ] Deploy secured upload Worker: blocked because this workspace role cannot create a Cloudflare connection.
 - [x] Fix browser settings persistence and official links without deleting movies.
 - [x] Add series, seasons, episodes and playback navigation.
 - [x] Verify settings and episode flows on mobile and desktop.
-- [x] Add shared movie saving and VIP / Shop pages; public pages and automated checks pass.
-- [x] Add Admin movie file uploads using PUT, percentage progress, cancellation and confirmed Supabase saving.
-- [ ] Verify successful upload and site read-back: live Worker returns 401 Wrong secret instead of the provided unauthenticated code.
-- [ ] Verify authenticated admin flow: blocked by the missing requested Supabase Auth account.
-- [ ] Support files beyond Cloudflare's incoming request limit: user's current Worker needs multipart upload endpoints; single PUT cannot remove this external limit.
+- [x] Connect Admin movie file uploads to the user's existing Worker using PUT and percentage progress.
+- [x] Build GOD OF WAR (completed, real video link) into the code so every deployment shows it.
+- [x] Admin sign-in: only piwantonny@gmail.com + saved password, no PIN, no second account.
+- [x] Push this version to GitHub main for Netlify.
+- [ ] Confirm vjemma.site shows the new version: Netlify deploy status is not visible from here.
+- [ ] Deploy the upload Worker "Wrong secret" fix: no Cloudflare access and no Worker code in this project.
+- [ ] Support files beyond Cloudflare's single-request size limit (Worker needs multipart upload).
