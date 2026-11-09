@@ -1,4 +1,7 @@
 # Requested updates
+- [ ] Save current preview to the connected GitHub repository and verify Netlify updates vjemma.site without visual changes.
+- [ ] Replace admin PIN login with the single requested email and Supabase password; no additional account.
+- [ ] Deploy secured upload Worker: blocked because this workspace role cannot create a Cloudflare connection.
 - [x] Fix browser settings persistence and official links without deleting movies.
 - [x] Add series, seasons, episodes and playback navigation.
 - [x] Verify settings and episode flows on mobile and desktop.
