@@ -33,3 +33,5 @@ use the editor.
 - Series reuse the existing content model and detail route with nested seasons and episodes, preserving existing movie IDs and playback access rules.
 - Define form wrapper components at module scope so state updates do not remount inputs or discard focus.
 - Upgrade legacy contact settings once using a version marker; later admin edits must survive refresh without being overwritten by defaults.
+- Movie file uploads stream directly from the browser via XMLHttpRequest PUT; only the confirmed returned URL is sent through saveMovie to Supabase, avoiding app-server file body limits.
+- Server function modules keep privileged helpers in vj.server.ts and dynamically load them inside handlers to preserve the client/server boundary.
