@@ -1,6 +1,8 @@
 # Requested updates
-- [ ] Save current preview to the connected GitHub repository and verify Netlify updates vjemma.site without visual changes.
-- [ ] Replace admin PIN login with the single requested email and Supabase password; no additional account.
+- [x] Save current preview code for connected GitHub sync, keeping GOD OF WAR completed and existing shared movies unchanged.
+- [ ] Confirm Netlify deploys the synced commit to vjemma.site: deployment status and GitHub sync are not accessible here.
+- [x] Replace admin PIN login with single-email Supabase password login; no additional account created.
+- [ ] Enable and verify requested admin account: connected Supabase contains no auth account for the requested email, so no admin role could be assigned.
 - [ ] Deploy secured upload Worker: blocked because this workspace role cannot create a Cloudflare connection.
 - [x] Fix browser settings persistence and official links without deleting movies.
 - [x] Add series, seasons, episodes and playback navigation.
@@ -8,5 +10,5 @@
 - [x] Add shared movie saving and VIP / Shop pages; public pages and automated checks pass.
 - [x] Add Admin movie file uploads using PUT, percentage progress, cancellation and confirmed Supabase saving.
 - [ ] Verify successful upload and site read-back: live Worker returns 401 Wrong secret instead of the provided unauthenticated code.
-- [ ] Verify authenticated admin flow: the earlier default admin login is rejected by current shared settings; user must sign in with their current admin credentials.
+- [ ] Verify authenticated admin flow: blocked by the missing requested Supabase Auth account.
 - [ ] Support files beyond Cloudflare's incoming request limit: user's current Worker needs multipart upload endpoints; single PUT cannot remove this external limit.

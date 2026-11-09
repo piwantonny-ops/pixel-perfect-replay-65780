@@ -35,3 +35,4 @@ use the editor.
 - Upgrade legacy contact settings once using a version marker; later admin edits must survive refresh without being overwritten by defaults.
 - Movie file uploads stream directly from the browser via XMLHttpRequest PUT; only the confirmed returned URL is sent through saveMovie to Supabase, avoiding app-server file body limits.
 - Server function modules keep privileged helpers in vj.server.ts and dynamically load them inside handlers to preserve the client/server boundary.
+- Admin operations validate Supabase Auth tokens and the caller's own protected user_roles row before loading privileged data; never store or accept legacy admin passwords in browser storage.
