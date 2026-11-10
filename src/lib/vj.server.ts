@@ -1,6 +1,6 @@
 export const PRIVATE_KEYS = ["adminUser", "adminPassword", "pesapalKey", "pesapalSecret", "r2Endpoint", "r2Token", "r2AccessKey", "r2Secret"] as const;
 export type Obj = Record<string, unknown>;
-export type AdminAuth = { u: string; p: string };
+export type AdminAuth = { token: string };
 /** The only admin account: this email plus the saved admin password. */
 export const ADMIN_EMAIL = "piwantonny@gmail.com";
 export const isAdminEmail = (u: unknown) => typeof u === "string" && u.trim().toLowerCase() === ADMIN_EMAIL;
@@ -34,10 +34,24 @@ export async function privateSettings(db: Awaited<ReturnType<typeof admin>>) {
   const { data } = await db.from("site_settings").select("value").eq("key", "private").maybeSingle();
   return (data?.value ?? { adminUser: "admin", adminPassword: "1234" }) as Obj;
 }
+/** Admin = the fixed email, confirmed, signed in through an email link (never a password-only session). */
+export function isAdminSession(email: unknown, confirmedAt: unknown, amrMethods: string[]) {
+  return isAdminEmail(email) && !!confirmedAt && amrMethods.length > 0 && amrMethods.some((m) => m !== "password");
+}
+function amrMethods(token: string): string[] {
+  try {
+    const part = token.split(".")[1] ?? "";
+    const json = JSON.parse(atob(part.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(part.length / 4) * 4, "=")));
+    return Array.isArray(json.amr) ? json.amr.map((a: { method?: string } | string) => (typeof a === "string" ? a : String(a?.method ?? ""))) : [];
+  } catch { return []; }
+}
 export async function checkAdmin(auth: AdminAuth) {
+  if (!auth?.token) throw new Error("Admin login required");
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin.auth.getUser(auth.token);
+  if (error || !data.user || !isAdminSession(data.user.email, data.user.email_confirmed_at, amrMethods(auth.token))) throw new Error("Admin login required");
   const db = await admin();
   const priv = await privateSettings(db);
-  if (!auth || !isAdminEmail(auth.u) || !auth.p || auth.p !== priv["adminPassword"]) throw new Error("Admin login required");
   return { db, priv };
 }
 export async function userByToken(token: string) {

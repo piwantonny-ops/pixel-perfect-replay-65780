@@ -33,5 +33,5 @@ use the editor.
 - Series reuse the existing content model and detail route with nested seasons and episodes, preserving existing movie IDs and playback access rules.
 - Define form wrapper components at module scope so state updates do not remount inputs or discard focus.
 - Upgrade legacy contact settings once using a version marker; later admin edits must survive refresh without being overwritten by defaults.
-- Admin sign-in accepts only the fixed admin email (vj.server.ts ADMIN_EMAIL) plus the password saved in private site settings, so it works on any deployment's database without extra auth accounts.
+- Admin sign-in is an emailed login link (Cloud Auth magic link) for the single fixed admin email; the server accepts only a confirmed session for that email whose sign-in method is not password-only.
 - Movies that must appear on every deployment (including Git/Netlify builds with a different database) live in src/lib/pinned-movies.ts and are merged in by store.ts withPinned.

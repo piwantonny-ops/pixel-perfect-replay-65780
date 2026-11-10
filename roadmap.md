@@ -4,8 +4,9 @@
 - [x] Verify settings and episode flows on mobile and desktop.
 - [x] Connect Admin movie file uploads to the user's existing Worker using PUT and percentage progress.
 - [x] Build GOD OF WAR (completed, real video link) into the code so every deployment shows it.
-- [x] Admin sign-in: only piwantonny@gmail.com + saved password, no PIN, no second account.
+- [x] Admin sign-in: email-only login link for piwantonny@gmail.com, no password, no PIN.
 - [x] Push this version to GitHub main for Netlify.
-- [ ] Confirm vjemma.site shows the new version: Netlify deploy status is not visible from here.
+- [x] Confirm vjemma.site shows GOD OF WAR and the email admin login.
 - [ ] Deploy the upload Worker "Wrong secret" fix: no Cloudflare access and no Worker code in this project.
 - [ ] Support files beyond Cloudflare's single-request size limit (Worker needs multipart upload).
+- [ ] Admin login on vjemma.site: Netlify has no database access for the site's server part, so admin sign-in can only complete where the app is hosted by Lovable (move the domain or publish).

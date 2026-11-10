@@ -14,7 +14,7 @@ import { MovieUpload } from "@/components/site/MovieUpload";
 import { SeasonEditor } from "@/components/site/SeasonEditor";
 import {
   useDB, useSession, update, setAdmin, isActive, markPaymentPaid, ugx, fmtDate, newId, slugify, ROWS, categoryName,
-  saveSettings, loginAdmin, saveMovie, type Movie, type Settings, type Badge,
+  saveSettings, sendAdminLoginLink, saveMovie, type Movie, type Settings, type Badge,
 } from "@/lib/store";
 
 export const Route = createFileRoute("/admin")({
@@ -39,21 +39,31 @@ function SettingsSection({ title, children }: { title: string; children: React.R
 }
 
 function AdminLogin() {
-  const [u, setU] = useState("");
-  const [p, setP] = useState("");
+  const [email, setEmail] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <form
         className="w-full max-w-sm space-y-3 rounded-2xl bg-card p-6 shadow-glow"
         onSubmit={(e) => {
           e.preventDefault();
-          loginAdmin(u, p).then(() => toast.success("Welcome, admin")).catch(() => toast.error("Wrong email or password"));
+          setSending(true);
+          sendAdminLoginLink(email)
+            .then(() => { setSent(true); toast.success("Login link sent. Check your email."); })
+            .catch((err: unknown) => toast.error(err instanceof Error ? err.message : "Could not send the login link"))
+            .finally(() => setSending(false));
         }}
       >
         <h1 className="font-display text-4xl tracking-wide">Admin Login</h1>
-        <Input type="email" autoComplete="username" placeholder="Email" value={u} onChange={(e) => setU(e.target.value)} />
-        <Input type="password" autoComplete="current-password" placeholder="Password" value={p} onChange={(e) => setP(e.target.value)} />
-        <Button type="submit" variant="hero" className="w-full">Log in</Button>
+        {sent ? (
+          <p className="text-sm text-muted-foreground">We sent a login link to {email.trim()}. Open your email and tap the link to log in as admin.</p>
+        ) : (
+          <>
+            <Input type="email" autoComplete="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <Button type="submit" variant="hero" className="w-full" disabled={sending}>{sending ? "Sending…" : "Send Login Link"}</Button>
+          </>
+        )}
         <Link to="/" className="block text-center text-sm text-muted-foreground">← Back to site</Link>
       </form>
     </div>
@@ -451,9 +461,8 @@ function SettingsTab() {
         {F("Logo Text", "logoText")}
         {F("Tagline", "tagline")}
         {F("Live TV channels count", "liveTvChannels", "number")}
-        <p className="text-sm text-muted-foreground">Admin email: piwantonny@gmail.com</p>
-        {F("Admin Password", "adminPassword", "password")}
-        <Button variant="hero" onClick={() => { if (s.adminPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; } save("Site settings"); }}>Save site settings</Button>
+        <p className="text-sm text-muted-foreground">Admin email: piwantonny@gmail.com (log in with an emailed link)</p>
+        <Button variant="hero" onClick={() => save("Site settings")}>Save site settings</Button>
       </SettingsSection>
       <div className="md:col-span-2"><Taxonomy /></div>
     </div>

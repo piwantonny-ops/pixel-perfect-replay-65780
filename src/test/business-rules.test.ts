@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { canWatch, extendExpiry, isActive, normalizePhone, seedDB, restoreDB } from "@/lib/store";
-import { isAdminEmail } from "@/lib/vj.server";
+import { isAdminEmail, isAdminSession } from "@/lib/vj.server";
 
 const DAY = 86400000;
 
@@ -14,6 +14,12 @@ describe("VJEMMA business rules", () => {
     expect(isAdminEmail(" PiwanTonny@Gmail.com ")).toBe(true);
     expect(isAdminEmail("admin")).toBe(false);
     expect(isAdminEmail("someone@gmail.com")).toBe(false);
+  });
+  it("admin needs a confirmed email-link session, never a password-only one", () => {
+    expect(isAdminSession("piwantonny@gmail.com", "2026-11-09", ["otp"])).toBe(true);
+    expect(isAdminSession("piwantonny@gmail.com", "2026-11-09", ["password"])).toBe(false);
+    expect(isAdminSession("piwantonny@gmail.com", null, ["otp"])).toBe(false);
+    expect(isAdminSession("other@gmail.com", "2026-11-09", ["otp"])).toBe(false);
   });
   it("GOD OF WAR (completed) is built into the code and kept on every device", () => {
     const gow = seedDB().movies.find((m) => m.id === "god-of-war");

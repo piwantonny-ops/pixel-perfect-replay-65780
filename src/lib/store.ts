@@ -5,6 +5,9 @@ import poster1 from "@/assets/poster-1.jpg";
 import poster2 from "@/assets/poster-2.jpg";
 import { getPublicData, adminLogin, adminSync, userMe, adminSaveMovie } from "./vj.functions";
 import { PINNED_MOVIES } from "./pinned-movies";
+import { supabase } from "@/integrations/supabase/client";
+
+export const ADMIN_EMAIL = "piwantonny@gmail.com";
 
 /** Built-in movies always appear first; a saved copy with the same id wins. */
 export function withPinned(movies: Movie[]): Movie[] {
@@ -198,11 +201,16 @@ export function update(fn: (db: DB) => DB) {
 /* ---------- Supabase sync ---------- */
 const ADMIN_AUTH = "vjemma-admin-auth";
 const TOKEN = "vjemma-token";
-export const getAdminAuth = () => { try { return JSON.parse(sessionStorage.getItem(ADMIN_AUTH) || "null") as { u: string; p: string } | null; } catch { return null; } };
+/** The admin's signed-in email-link session, if any. */
+export const getAdminAuth = async () => {
+  const { data } = await supabase.auth.getSession();
+  const session = data.session;
+  return session && session.user.email?.toLowerCase() === ADMIN_EMAIL ? { token: session.access_token } : null;
+};
 export const getUserToken = () => localStorage.getItem(TOKEN) ?? "";
 
 async function persist(prev: DB, next: DB) {
-  const auth = getAdminAuth();
+  const auth = await getAdminAuth();
   if (!auth || !readSession().admin) return;
   const payload: Parameters<typeof adminSync>[0]["data"] = { auth };
   if (prev.movies !== next.movies) payload.movies = next.movies as never;
@@ -244,20 +252,30 @@ export async function refreshFromServer() {
         payments: [...me.payments, ...cur.payments.filter((p) => p.userId !== currentUser.id)] });
     } else { localStorage.removeItem(TOKEN); setSessionUser(null); }
   }
-  const auth = getAdminAuth();
-  if (auth && readSession().admin) await loginAdmin(auth.u, auth.p).catch(() => setAdmin(false));
+  const auth = await getAdminAuth();
+  if (auth) await restoreAdmin(auth).catch(() => setAdmin(false));
   return pub.ok;
 }
 
-/** Verifies admin on the server, loads private data and uploads any collections the database is still missing. */
-export async function loginAdmin(u: string, p: string) {
-  const res = await adminLogin({ data: { u, p } });
-  sessionStorage.setItem(ADMIN_AUTH, JSON.stringify({ u, p }));
+/** Emails a one-time login link to the admin address. Only the admin email is accepted. */
+export async function sendAdminLoginLink(email: string) {
+  if (email.trim().toLowerCase() !== ADMIN_EMAIL) throw new Error("This email is not the admin email.");
+  const { error } = await supabase.auth.signInWithOtp({
+    email: ADMIN_EMAIL,
+    options: { emailRedirectTo: `${window.location.origin}/admin`, shouldCreateUser: true },
+  });
+  if (error) throw new Error(error.message);
+}
+
+/** Verifies the admin session on the server, loads private data and uploads any collections the database is still missing. */
+async function restoreAdmin(auth: { token: string }) {
+  sessionStorage.removeItem(ADMIN_AUTH);
+  const res = await adminLogin({ data: auth });
   const pub = await getPublicData();
   const cur = load();
   commit({ ...cur, users: res.users, payments: res.payments, settings: { ...cur.settings, ...res.privateSettings } });
   if (pub.ok) {
-    const missing: Parameters<typeof adminSync>[0]["data"] = { auth: { u, p } };
+    const missing: Parameters<typeof adminSync>[0]["data"] = { auth };
     if (!pub.movies.length && cur.movies.length) missing.movies = cur.movies as never;
     if (!pub.settings) { missing.settings = load().settings as never; missing.categories = cur.categories as never; missing.genres = cur.genres as never; }
     if (Object.keys(missing).length > 1) await adminSync({ data: missing });
@@ -282,7 +300,14 @@ export function saveSettings(settings: Settings, plans: Plan[]) {
 
 function subscribe(l: () => void) {
   listeners.add(l);
-  if (!hydrated) { hydrated = true; void refreshFromServer().catch((e) => console.error(e)); }
+  if (!hydrated) {
+    hydrated = true;
+    void refreshFromServer().catch((e) => console.error(e));
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event !== "SIGNED_IN" || session?.user.email?.toLowerCase() !== ADMIN_EMAIL || readSession().admin) return;
+      void restoreAdmin({ token: session.access_token }).catch((e) => { console.error(e); setAdmin(false); });
+    });
+  }
   const onStorage = (e: StorageEvent) => { if (e.key === KEY || e.key === SESSION) { state = null; l(); } };
   window.addEventListener("storage", onStorage);
   return () => { listeners.delete(l); window.removeEventListener("storage", onStorage); };
@@ -315,7 +340,7 @@ export function setSessionUser(id: string | null) {
   emit();
 }
 export function setAdmin(on: boolean) {
-  if (on) sessionStorage.setItem(ADMIN, "1"); else { sessionStorage.removeItem(ADMIN); sessionStorage.removeItem("vjemma-admin-auth"); }
+  if (on) sessionStorage.setItem(ADMIN, "1"); else { sessionStorage.removeItem(ADMIN); sessionStorage.removeItem("vjemma-admin-auth"); void supabase.auth.signOut(); }
   emit();
 }
 
@@ -360,7 +385,7 @@ export function avgRating(db: DB, movieId: string) {
 }
 
 export async function saveMovie(movie: Movie): Promise<Movie> {
-  const auth = getAdminAuth();
+  const auth = await getAdminAuth();
   if (!auth) throw new Error("Please sign in as admin");
   const cur = load();
   let id = movie.id || slugify(movie.title) || newId();
