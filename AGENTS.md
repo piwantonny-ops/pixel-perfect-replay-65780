@@ -35,3 +35,4 @@ use the editor.
 - Upgrade legacy contact settings once using a version marker; later admin edits must survive refresh without being overwritten by defaults.
 - Admin sign-in is an emailed login link (Cloud Auth magic link) for the single fixed admin email; the server accepts only a confirmed session for that email whose sign-in method is not password-only.
 - Movies that must appear on every deployment (including Git/Netlify builds with a different database) live in src/lib/pinned-movies.ts and are merged in by store.ts withPinned.
+- Netlify builds force the app's backend address from src/lib/backend-env.ts (applied in vite.config.ts) because Netlify dashboard env vars override the repo .env and once held a mistyped address.

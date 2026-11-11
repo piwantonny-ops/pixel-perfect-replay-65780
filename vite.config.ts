@@ -8,6 +8,10 @@
 // hosting already compresses at the edge.
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { applyNetlifyBackendEnv } from "./src/lib/backend-env";
+
+// Netlify dashboard env vars override .env; make Netlify builds use the correct backend.
+applyNetlifyBackendEnv(process.env);
 
 export default defineConfig({
   tanstackStart: {

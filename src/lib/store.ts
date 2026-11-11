@@ -264,7 +264,7 @@ export async function sendAdminLoginLink(email: string) {
     email: ADMIN_EMAIL,
     options: { emailRedirectTo: `${window.location.origin}/admin`, shouldCreateUser: true },
   });
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(/fetch/i.test(error.message) ? "Can't reach the sign-in service. Please try again." : error.message);
 }
 
 /** Verifies the admin session on the server, loads private data and uploads any collections the database is still missing. */

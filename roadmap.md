@@ -7,6 +7,7 @@
 - [x] Admin sign-in: email-only login link for piwantonny@gmail.com, no password, no PIN.
 - [x] Push this version to GitHub main for Netlify.
 - [x] Confirm vjemma.site shows GOD OF WAR and the email admin login.
+- [x] Fix "Failed to fetch" on Admin Login (vjemma.site pointed at a mistyped sign-in address); show "Check your email".
 - [ ] Deploy the upload Worker "Wrong secret" fix: no Cloudflare access and no Worker code in this project.
 - [ ] Support files beyond Cloudflare's single-request size limit (Worker needs multipart upload).
 - [ ] Admin login on vjemma.site: Netlify has no database access for the site's server part, so admin sign-in can only complete where the app is hosted by Lovable (move the domain or publish).

@@ -57,7 +57,10 @@ function AdminLogin() {
       >
         <h1 className="font-display text-4xl tracking-wide">Admin Login</h1>
         {sent ? (
-          <p className="text-sm text-muted-foreground">We sent a login link to {email.trim()}. Open your email and tap the link to log in as admin.</p>
+          <div className="space-y-1">
+            <p className="font-display text-2xl">Check your email</p>
+            <p className="text-sm text-muted-foreground">We sent a login link to {email.trim()}. Open your email and tap the link to log in as admin.</p>
+          </div>
         ) : (
           <>
             <Input type="email" autoComplete="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
