@@ -257,14 +257,28 @@ export async function refreshFromServer() {
   return pub.ok;
 }
 
-/** Emails a one-time login link to the admin address. Only the admin email is accepted. */
-export async function sendAdminLoginLink(email: string) {
-  if (email.trim().toLowerCase() !== ADMIN_EMAIL) throw new Error("This email is not the admin email.");
-  const { error } = await supabase.auth.signInWithOtp({
+/** /** Admin login with Email + Password. Only the admin email is accepted. */
+export async function sendAdminLoginLink(email: string, password: string) {
+  if (email.trim().toLowerCase() !== ADMIN_EMAIL) throw new Error("This email is not the admin email");
+  if (!password) throw new Error("Enter your password");
+  const { data, error } = await supabase.auth.signInWithPassword({
     email: ADMIN_EMAIL,
-    options: { emailRedirectTo: `${window.location.origin}/admin`, shouldCreateUser: true },
+    password,
   });
-  if (error) throw new Error(/fetch/i.test(error.message) ? "Can't reach the sign-in service. Please try again." : error.message);
+  if (error) throw new Error(/Fetch/i.test(error.message) ? "Can't reach the sign-in server. Check connection." : error.message);
+  if (data.session) {
+    await restoreAdmin({ token: data.session.access_token }).catch(() => setAdmin(true));
+  }
+  return data;
+}
+
+/** Forgot Password - sends a password reset email to admin only. */
+export async function sendAdminPasswordReset(email: string) {
+  if (email.trim().toLowerCase() !== ADMIN_EMAIL) throw new Error("This email is not the admin email");
+  const { error } = await supabase.auth.resetPasswordForEmail(ADMIN_EMAIL, {
+    redirectTo: `${window.location.origin}/admin`,
+  });
+  if (error) throw new Error(error.message);
 }
 
 /** Verifies the admin session on the server, loads private data and uploads any collections the database is still missing. */
