@@ -38,10 +38,10 @@ function SettingsSection({ title, children }: { title: string; children: React.R
   return <section className="min-w-0 space-y-3 border-t border-border pt-4"><h3 className="font-display text-2xl">{title}</h3>{children}</section>;
 }
 
-function AdminLogin() {
+function AdminLogin() {function AdminLogin() {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <form
@@ -49,25 +49,19 @@ function AdminLogin() {
         onSubmit={(e) => {
           e.preventDefault();
           setSending(true);
-          sendAdminLoginLink(email)
-            .then(() => { setSent(true); toast.success("Login link sent. Check your email."); })
-            .catch((err: unknown) => toast.error(err instanceof Error ? err.message : "Could not send the login link"))
+          sendAdminLoginLink(email, password)
+            .then(() => {
+              toast.success("Welcome back, Admin");
+            })
+            .catch((err: unknown) => toast.error(err instanceof Error ? err.message : "Login failed"))
             .finally(() => setSending(false));
         }}
       >
         <h1 className="font-display text-4xl tracking-wide">Admin Login</h1>
-        {sent ? (
-          <div className="space-y-1">
-            <p className="font-display text-2xl">Check your email</p>
-            <p className="text-sm text-muted-foreground">We sent a login link to {email.trim()}. Open your email and tap the link to log in as admin.</p>
-          </div>
-        ) : (
-          <>
-            <Input type="email" autoComplete="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            <Button type="submit" variant="hero" className="w-full" disabled={sending}>{sending ? "Sending…" : "Send Login Link"}</Button>
-          </>
-        )}
-        <Link to="/" className="block text-center text-sm text-muted-foreground">← Back to site</Link>
+        <Input type="email" autoComplete="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <Input type="password" autoComplete="current-password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <Button type="submit" variant="hero" className="w-full" disabled={sending}>{sending ? "Signing in..." : "Login"}</Button>
+        <Link to="/" className="block text-center text-sm text-muted-foreground">Back to site</Link>
       </form>
     </div>
   );
