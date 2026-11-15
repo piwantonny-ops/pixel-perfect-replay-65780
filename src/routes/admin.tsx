@@ -38,8 +38,7 @@ function SettingsSection({ title, children }: { title: string; children: React.R
   return <section className="min-w-0 space-y-3 border-t border-border pt-4"><h3 className="font-display text-2xl">{title}</h3>{children}</section>;
 }
 
-function AdminLogin() {function AdminLogin() {
-  const [email, setEmail] = useState("");
+function AdminLogin() {  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [sending, setSending] = useState(false);
   return (
