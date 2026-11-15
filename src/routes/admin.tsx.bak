@@ -506,4 +506,3 @@ function ShopAdmin() {
     </div>
   );
 }
-}
