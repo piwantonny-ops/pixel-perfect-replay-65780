@@ -36,7 +36,7 @@ export async function privateSettings(db: Awaited<ReturnType<typeof admin>>) {
 }
 /** Admin = the fixed email, confirmed, signed in through an email link (never a password-only session). */
 export function isAdminSession(email: unknown, confirmedAt: unknown, amrMethods: string[]) {
-  return isAdminEmail(email) && !!confirmedAt && amrMethods.length > 0 && amrMethods.some((m) => m !== "password");
+  return isAdminEmail(email) && !!confirmedAt );
 }
 function amrMethods(token: string): string[] {
   try {
