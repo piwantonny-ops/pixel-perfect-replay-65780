@@ -1,0 +1,39 @@
+{
+  "background_color": "#ffffff",
+  "description": "Stream the latest VJ Emma translated movies, series, drama and Nigerian films. Daily, weekly and monthly plans.",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "vjemma",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "vjemma",
+  "start_url": "/",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "https://vjemma.site/favicon.ico",
+      "type": "image/x-icon",
+      "isSquare": false,
+      "isPng": false,
+      "isWebp": false,
+      "isJpg": false,
+      "width": 0,
+      "is512x512": false,
+      "is256x256": false,
+      "is192x192": false
+    },
+    {
+      "src": "https://vjemma.site/favicon.ico",
+      "type": "image/x-icon",
+      "isSquare": false,
+      "isPng": false,
+      "isWebp": false,
+      "isJpg": false,
+      "width": 0,
+      "is512x512": false,
+      "is256x256": false,
+      "is192x192": false
+    }
+  ],
+  "id": "https://vjemma.site/"
+}
