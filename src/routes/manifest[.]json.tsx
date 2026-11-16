@@ -33,13 +33,17 @@ const manifest = {
 }
 
 export const Route = createFileRoute('/manifest[.]json')({
-  loader: () => {
-    return new Response(JSON.stringify(manifest, null, 2), {
-      headers: {
-        'Content-Type': 'application/manifest+json',
-        'Cache-Control': 'public, max-age=0, must-revalidate',
+  server: {
+    handlers: {
+      GET: () => {
+        return new Response(JSON.stringify(manifest, null, 2), {
+          headers: {
+            'Content-Type': 'application/manifest+json',
+            'Cache-Control': 'public, max-age=0, must-revalidate',
+          },
+        })
       },
-    })
+    },
   },
   component: () => null,
 })
