@@ -405,7 +405,17 @@ export async function saveMovie(movie: Movie): Promise<Movie> {
   let id = movie.id || slugify(movie.title) || newId();
   if (!movie.id && cur.movies.some((m) => m.id === id)) id += `-${newId()}`;
   const next = { ...movie, id, createdAt: movie.createdAt || Date.now() };
-  await adminSaveMovie({ data: { auth, movie: next } });
+  await fetch("/api/movies", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    title: next.title,
+    description: next.description || "",
+    poster_url: (next as any).poster || (next as any).posterUrl || "",
+    video_url: (next as any).videoUrl || "",
+    category: (next as any).category || "movie",
+  }),
+});
   updateLocal((db) => ({ ...db, movies: [next, ...db.movies.filter((m) => m.id !== id)] }));
   return next;
 }
