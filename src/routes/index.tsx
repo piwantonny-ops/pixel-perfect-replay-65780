@@ -40,9 +40,9 @@ function Hero() {
       ))}
       <div className="absolute inset-0 bg-gradient-hero" />
       <div className="absolute inset-x-0 bottom-10 px-5 sm:px-10">
-        <h1 className="max-w-3xl font-display text-5xl uppercase leading-none tracking-wide sm:text-7xl">
+        <h2 className="max-w-3xl font-display text-5xl uppercase leading-none tracking-wide sm:text-7xl">
           {m.title} {m.completed && !/completed/i.test(m.title) && <span className="text-accent">Completed</span>}
-        </h1>
+        </h2>
         <p className="mt-2 line-clamp-2 max-w-xl text-sm text-muted-foreground sm:text-base">{m.description}</p>
         <Button asChild variant="hero" size="lg" className="mt-4 rounded-full">
           <Link to="/movie/$id" params={{ id: m.id }}><Play className="fill-current" /> Play</Link>
@@ -64,6 +64,7 @@ function Index() {
   const sorted = [...db.movies].sort((a, b) => b.createdAt - a.createdAt);
   return (
     <SiteLayout>
+      <h1 className="sr-only">VJ Emma Translated Movies - Watch Latest Luo Translated Movies, Series and Drama in Uganda</h1>
       <Hero />
       <div className="no-scrollbar flex gap-2 overflow-x-auto px-4 py-3">
         {db.genres.map((g) => (
