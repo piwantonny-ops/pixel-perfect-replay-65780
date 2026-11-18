@@ -79,8 +79,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "VJEMMA MOVIES — VJ Emma Translated Movies" },
-      { name: "description", content: "Watch VJ Emma translated movies and series online." },
+      { title: "Vjemma - Luo VJ Translated Movies | Watch Movies in Luo" },
+      { name: "description", content: "Watch latest movies translated in Luo by VJ Vjemma. Action, Nigerian, Indian & Korean movies in Luo language. Watch online anytime on vjemma.site." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
