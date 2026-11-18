@@ -10,7 +10,7 @@ export const BACKEND = {
 } as const;
 
 export function applyNetlifyBackendEnv(env: Record<string, string | undefined>) {
-  if (env["NETLIFY"] !== "true") return false;
+  
   env["VITE_SUPABASE_URL"] = BACKEND.url;
   env["VITE_SUPABASE_PUBLISHABLE_KEY"] = BACKEND.publishableKey;
   env["VITE_SUPABASE_ANON_KEY"] = BACKEND.publishableKey;
