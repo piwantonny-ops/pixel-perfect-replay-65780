@@ -202,10 +202,26 @@ export function update(fn: (db: DB) => DB) {
 const ADMIN_AUTH = "vjemma-admin-auth";
 const TOKEN = "vjemma-token";
 /** The admin's signed-in email-link session, if any. */
-export const getAdminAuth = async () => {
-  const { data } = await supabase.auth.getSession();
-  const session = data.session;
-  return session && session.user.email?.toLowerCase() === ADMIN_EMAIL ? { token: session.access_token } : null;
+ export const getAdminAuth = async () => {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const { data } = await supabase.auth.getSession();
+      const session = data.session;
+      if (session) {
+        return session.user.email?.toLowerCase() === ADMIN_EMAIL ? { token: session.access_token } : null;
+      }
+    } catch {}
+    await new Promise((r) => setTimeout(r, 800));
+  }
+  // Last try: force Supabase to refresh the session from storage
+  try {
+    const { data } = await supabase.auth.refreshSession();
+    const session = data.session;
+    if (session && session.user.email?.toLowerCase() === ADMIN_EMAIL) {
+      return { token: session.access_token };
+    }
+  } catch {}
+  return null;
 };
 export const getUserToken = () => localStorage.getItem(TOKEN) ?? "";
 
