@@ -227,14 +227,29 @@ async function persist(prev: DB, next: DB) {
 }
 
 let hydrated = false;
-export async function refreshFromServer() {
+export async function refreshFromServer() {  let d1Movies: any[] = [];
+  try {
+    const r = await fetch("/api/movies");
+    if (r.ok) {
+      const raw = await r.json();
+      d1Movies = (Array.isArray(raw) ? raw : []).map((m: any) => ({
+        id: m.id,
+        title: m.title,
+        description: m.description || "",
+        poster: m.poster_url || m.poster || "",
+        posterUrl: m.poster_url || m.poster || "",
+        videoUrl: m.video_url || m.videoUrl || "",
+        category: m.category || "movie",
+      }));
+    }
+  } catch {}
   const pub = await getPublicData();
   if (pub.ok) {
     const cur = load();
     const ps = (pub.settings ?? {}) as Partial<DB> & { settings?: Partial<Settings> };
     commit({
       ...cur,
-      movies: withPinned(pub.movies.length ? (pub.movies as unknown as Movie[]) : cur.movies),
+     movies: withPinned(d1Movies.length ? (d1Movies as unknown as Movie[]) : (pub.movies.length ? (pub.movies as unknown as Movie[]) : cur.movies)),
       plans: pub.plans.length ? (pub.plans as unknown as Plan[]) : cur.plans,
       products: pub.products as unknown as Product[],
       categories: ps.categories ?? cur.categories,
