@@ -26,4 +26,13 @@ export const backendEnv = {
   SUPABASE_SERVICE_ROLE_KEY,
 };
 
+// This export is REQUIRED by vite.config.ts - do not delete it
+export function applyNetlifyBackendEnv(config: any = {}) {
+  if (!config) return config;
+  if (!config.define) config.define = {};
+  config.define["process.env.SUPABASE_URL"] = JSON.stringify(SUPABASE_URL);
+  config.define["process.env.SUPABASE_SERVICE_ROLE_KEY"] = JSON.stringify(SUPABASE_SERVICE_ROLE_KEY);
+  return config;
+}
+
 export default backendEnv;
