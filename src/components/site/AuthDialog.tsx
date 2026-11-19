@@ -11,7 +11,6 @@ export function AuthDialog({ open, onOpenChange, onDone }: { open: boolean; onOp
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [pw, setPw] = useState("");
-
   const [busy, setBusy] = useState(false);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,7 +19,7 @@ export function AuthDialog({ open, onOpenChange, onDone }: { open: boolean; onOp
     if (mode === "up" && !name.trim()) { toast.error("Enter your name"); return; }
     setBusy(true);
     try {
-      const res = mode === "up" ? await userSignup({ data: { name, phone, password: pw } }) : await userLogin({ data: { phone, password: pw } });
+      const res = mode === "up" ? await userSignup({ name, phone, password: pw }) : await userLogin({ phone, password: pw });
       if ("error" in res && res.error) { toast.error(res.error); return; }
       if ("user" in res && res.user) {
         signInUser(res.user, res.token);
@@ -31,7 +30,6 @@ export function AuthDialog({ open, onOpenChange, onDone }: { open: boolean; onOp
     } catch { toast.error("Connection problem. Please try again."); }
     finally { setBusy(false); }
   };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
