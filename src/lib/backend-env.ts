@@ -1,5 +1,3 @@
-// FINAL VERSION - fixes "Cannot create property on string"
-
 const get = (name: string): string => {
   try {
     if (typeof process !== "undefined" && (process as any).env) {
@@ -10,9 +8,7 @@ const get = (name: string): string => {
 };
 
 const SUPABASE_URL =
-  get("VITE_SUPABASE_URL") ||
-  get("SUPABASE_URL") ||
-  "";
+  get("VITE_SUPABASE_URL") || get("SUPABASE_URL") || "";
 
 const SUPABASE_SERVICE_ROLE_KEY =
   get("VITE_SUPABASE_SERVICE_ROLE_KEY") ||
@@ -38,15 +34,7 @@ export const backendEnv = {
   SUPABASE_SERVICE_ROLE_KEY,
 };
 
-// REQUIRED by vite.config.ts - do not delete
 export function applyNetlifyBackendEnv(config: any = {}) {
-  if (!config || typeof config !== "object") return config;
-  // FIX: define might already be a string - force it to an object
-  if (!config.define || typeof config.define !== "object") {
-    config.define = {};
-  }
-  config.define["process.env.SUPABASE_URL"] = JSON.stringify(SUPABASE_URL);
-  config.define["process.env.SUPABASE_SERVICE_ROLE_KEY"] = JSON.stringify(SUPABASE_SERVICE_ROLE_KEY);
   return config;
 }
 
