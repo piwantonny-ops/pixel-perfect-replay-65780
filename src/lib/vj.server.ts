@@ -71,3 +71,26 @@ export async function replaceAll(db: Awaited<ReturnType<typeof admin>>, table: s
   if (gone.length) await db.from(table).delete().in("id", gone);
 }
 
+export async function userSignup(email: string, password: string, name?: string) {
+  const db = await admin();
+  const cleanEmail = email.trim().toLowerCase();
+  const salt = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  const password_hash = await hash(password, salt);
+  const token = Math.random().toString(36).slice(2) + Date.now().toString(36) + Math.random().toString(36).slice(2);
+  const { data, error } = await db.from("users").insert([{ email: cleanEmail, name: name || cleanEmail.split("@")[0], password_hash, salt, session_token: token }]).select("*").single();
+  if (error) throw new Error(error.message);
+  return { db, user: data as Obj, token };
+}
+
+export async function userLogin(email: string, password: string) {
+  const db = await admin();
+  const cleanEmail = email.trim().toLowerCase();
+  const { data } = await db.from("users").select("*").eq("email", cleanEmail).maybeSingle();
+  if (!data) throw new Error("Account not found. Please sign up.");
+  const row = data as Obj;
+  const check = await hash(password, String(row.salt || ""));
+  if (check !== row.password_hash) throw new Error("Wrong password.");
+  const token = Math.random().toString(36).slice(2) + Date.now().toString(36) + Math.random().toString(36).slice(2);
+  await db.from("users").update({ session_token: token }).eq("email", cleanEmail);
+  return { db, user: row, token };
+}
