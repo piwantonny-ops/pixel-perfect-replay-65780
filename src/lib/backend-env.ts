@@ -1,6 +1,4 @@
-// SIMPLE VERSION - uses only process.env
-// vite.config.ts defines process.env.* for the browser, so this works everywhere
-// and it NEVER crashes on import.meta.env
+// FINAL VERSION - fixes "Cannot create property on string"
 
 const get = (name: string): string => {
   try {
@@ -24,7 +22,6 @@ const SUPABASE_SERVICE_ROLE_KEY =
   get("VITE_SUPABASE_PUBLISHABLE_KEY") ||
   "";
 
-// Don't throw during build - only in browser
 if (typeof window !== "undefined") {
   const missing: string[] = [];
   if (!SUPABASE_URL) missing.push("SUPABASE_URL");
@@ -43,8 +40,11 @@ export const backendEnv = {
 
 // REQUIRED by vite.config.ts - do not delete
 export function applyNetlifyBackendEnv(config: any = {}) {
-  if (!config) return config;
-  if (!config.define) config.define = {};
+  if (!config || typeof config !== "object") return config;
+  // FIX: define might already be a string - force it to an object
+  if (!config.define || typeof config.define !== "object") {
+    config.define = {};
+  }
   config.define["process.env.SUPABASE_URL"] = JSON.stringify(SUPABASE_URL);
   config.define["process.env.SUPABASE_SERVICE_ROLE_KEY"] = JSON.stringify(SUPABASE_SERVICE_ROLE_KEY);
   return config;
