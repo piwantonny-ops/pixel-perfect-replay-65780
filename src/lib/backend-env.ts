@@ -36,4 +36,4 @@ export function applyNetlifyBackendEnv(config: any = {}) {
   return config;
 }
 
-export default backendEnv;1
+export default backendEnv;
