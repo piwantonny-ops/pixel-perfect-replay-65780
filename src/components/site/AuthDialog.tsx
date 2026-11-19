@@ -7,7 +7,7 @@ type Props = {
   onAuth: (user: any) => void;
 };
 
-export default function AuthDialog({ open, onClose, onAuth }: Props) {
+export function AuthDialog({ open, onClose, onAuth }: Props) {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
