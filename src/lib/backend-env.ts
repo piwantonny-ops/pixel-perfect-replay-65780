@@ -1,3 +1,4 @@
+// Browser only - Vite injects VITE_ vars at build time from Cloudflare Build variables
 const get = (name: string): string => {
   try {
     const viteEnv = (import.meta as any)?.env;
@@ -12,7 +13,6 @@ const SUPABASE_SERVICE_ROLE_KEY =
   get("VITE_SUPABASE_SERVICE_ROLE_KEY") ||
   get("SUPABASE_SERVICE_ROLE_KEY") ||
   get("VITE_SUPABASE_ANON_KEY") ||
-  get("SUPABASE_ANON_KEY") ||
   get("VITE_SUPABASE_PUBLISHABLE_KEY") ||
   "";
 
