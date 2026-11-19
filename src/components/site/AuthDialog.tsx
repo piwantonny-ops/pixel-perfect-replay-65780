@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { userSignup, userLogin } from "../lib/vj.server";
+import { userSignup, userLogin } from "../../lib/vj.server";
 
 type Props = {
   open: boolean;
@@ -35,7 +35,6 @@ export default function AuthDialog({ open, onClose, onAuth }: Props) {
       let res: any;
 
       if (mode === "signup") {
-        // CORRECT for TanStack Start: must wrap in { data: ... }
         res = await userSignup({
           data: {
             name: name.trim(),
@@ -44,7 +43,6 @@ export default function AuthDialog({ open, onClose, onAuth }: Props) {
           },
         });
       } else {
-        // CORRECT for TanStack Start: must wrap in { data: ... }
         res = await userLogin({
           data: {
             phone: phone.trim(),
@@ -58,7 +56,6 @@ export default function AuthDialog({ open, onClose, onAuth }: Props) {
         return;
       }
 
-      // Success
       onAuth(res.user);
       setName("");
       setPhone("");
