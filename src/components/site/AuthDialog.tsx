@@ -1,49 +1,190 @@
 import { useState } from "react";
-import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { signInUser } from "@/lib/store";
-import { userSignup, userLogin } from "@/lib/vj.functions";
+import { userSignup, userLogin } from "../lib/vj.server";
 
-export function AuthDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenChange: (o: boolean) => void; onDone?: () => void }) {
-  const [mode, setMode] = useState<"in" | "up">("in");
+type Props = {
+  open: boolean;
+  onClose: () => void;
+  onAuth: (user: any) => void;
+};
+
+export default function AuthDialog({ open, onClose, onAuth }: Props) {
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [pw, setPw] = useState("");
-  const [busy, setBusy] = useState(false);
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (phone.replace(/\D/g, "").length < 9) { toast.error("Enter a valid phone number"); return; }
-    if (pw.length < 4) { toast.error("Password must be at least 4 characters"); return; }
-    if (mode === "up" && !name.trim()) { toast.error("Enter your name"); return; }
-    setBusy(true);
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  if (!open) return null;
+
+  async function handleSubmit() {
+    setError("");
+
+    if (!phone.trim() || !password) {
+      setError("Please enter phone and password");
+      return;
+    }
+
+    if (mode === "signup" && !name.trim()) {
+      setError("Please enter your name");
+      return;
+    }
+
+    setLoading(true);
     try {
-      const res = mode === "up" ? await userSignup({ name, phone, password: pw }) : await userLogin({ phone, password: pw });
-      if ("error" in res && res.error) { toast.error(res.error); return; }
-      if ("user" in res && res.user) {
-        signInUser(res.user, res.token);
-        toast.success(mode === "up" ? `Welcome, ${res.user.name}!` : `Welcome back, ${res.user.name}!`);
-        onOpenChange(false);
-        onDone?.();
+      let res: any;
+
+      if (mode === "signup") {
+        // CORRECT for TanStack Start: must wrap in { data: ... }
+        res = await userSignup({
+          data: {
+            name: name.trim(),
+            phone: phone.trim(),
+            password: password,
+          },
+        });
+      } else {
+        // CORRECT for TanStack Start: must wrap in { data: ... }
+        res = await userLogin({
+          data: {
+            phone: phone.trim(),
+            password: password,
+          },
+        });
       }
-    } catch { toast.error("Connection problem. Please try again."); }
-    finally { setBusy(false); }
-  };
+
+      if (!res || !res.ok) {
+        setError(res?.error || "Connection problem. Please try again.");
+        return;
+      }
+
+      // Success
+      onAuth(res.user);
+      setName("");
+      setPhone("");
+      setPassword("");
+      setError("");
+      onClose();
+    } catch (e: any) {
+      setError(e?.message || "Connection problem. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader><DialogTitle className="font-display text-3xl tracking-wide">{mode === "in" ? "Sign in" : "Create account"}</DialogTitle></DialogHeader>
-        <form onSubmit={submit} className="space-y-3">
-          {mode === "up" && <Input placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} />}
-          <Input placeholder="Phone number e.g. 0772 123456" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
-          <Input type="password" placeholder="Password" value={pw} onChange={(e) => setPw(e.target.value)} />
-          <Button type="submit" variant="hero" className="w-full" disabled={busy}>{mode === "in" ? "Sign in" : "Create account"}</Button>
-          <button type="button" className="w-full text-center text-sm text-muted-foreground" onClick={() => setMode(mode === "in" ? "up" : "in")}>
-            {mode === "in" ? "No account? Create one" : "Have an account? Sign in"}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl bg-zinc-900 p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-white">
+            {mode === "signin" ? "Sign In" : "Create Account"}
+          </h2>
+          <button
+            onClick={onClose}
+            className="rounded-full bg-zinc-800 px-3 py-1 text-white"
+          >
+            ✕
           </button>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </div>
+
+        <div className="mb-4 flex rounded-full bg-zinc-800 p-1">
+          <button
+            onClick={() => {
+              setMode("signin");
+              setError("");
+            }}
+            className={`flex-1 rounded-full py-2 text-sm font-semibold ${
+              mode === "signin" ? "bg-red-600 text-white" : "text-zinc-300"
+            }`}
+          >
+            Sign In
+          </button>
+          <button
+            onClick={() => {
+              setMode("signup");
+              setError("");
+            }}
+            className={`flex-1 rounded-full py-2 text-sm font-semibold ${
+              mode === "signup" ? "bg-red-600 text-white" : "text-zinc-300"
+            }`}
+          >
+            Create Account
+          </button>
+        </div>
+
+        {mode === "signup" && (
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Full name e.g. okoji"
+            className="mb-3 w-full rounded-xl bg-zinc-800 px-4 py-3 text-white outline-none placeholder:text-zinc-500"
+          />
+        )}
+
+        <input
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="Phone e.g. 0774470564"
+          inputMode="tel"
+          className="mb-3 w-full rounded-xl bg-zinc-800 px-4 py-3 text-white outline-none placeholder:text-zinc-500"
+        />
+
+        <input
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Password"
+          type="password"
+          className="mb-3 w-full rounded-xl bg-zinc-800 px-4 py-3 text-white outline-none placeholder:text-zinc-500"
+        />
+
+        {error && (
+          <p className="mb-3 rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-400">
+            {error}
+          </p>
+        )}
+
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="w-full rounded-xl bg-red-600 py-3 font-bold text-white disabled:opacity-50"
+        >
+          {loading
+            ? "Please wait..."
+            : mode === "signin"
+              ? "Sign In"
+              : "Create Account"}
+        </button>
+
+        <p className="mt-4 text-center text-sm text-zinc-400">
+          {mode === "signin" ? (
+            <>
+              No account?{" "}
+              <button
+                className="font-semibold text-white underline"
+                onClick={() => setMode("signup")}
+              >
+                Create one
+              </button>
+            </>
+          ) : (
+            <>
+              Already have an account?{" "}
+              <button
+                className="font-semibold text-white underline"
+                onClick={() => setMode("signin")}
+              >
+                Sign in
+              </button>
+            </>
+          )}
+        </p>
+      </div>
+    </div>
   );
 }
